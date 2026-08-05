@@ -25,8 +25,58 @@ import { facilities } from "@/content/facilities";
  */
 export function Facilities() {
   return (
-    <PageSection tone="light" spacing="standard">
-      <div className="flex flex-col gap-10">
+    <PageSection tone="light" spacing="standard" className="relative overflow-hidden">
+      {/* Visual continuity — Phase 3. Top blend dissolves the dark→light
+          transition from WhyInfiniti (Ink → Surface Light), bottom blend
+          dissolves the light→dark transition into TrainerShowcase. A faint
+          neutral vignette gives this flat light section depth parity with
+          the premium sections above/below. All layers are aria-hidden +
+          pointer-events-none atmosphere — static CSS, zero motion cost. */}
+      {/* Top blend — receives WhyInfiniti's dark tone and dissolves into the
+          light section, turning the hard black→white cut into a soft twilight.
+          Peak opacity lowered so the dark hand-off reads as a gradual lift
+          out of shadow rather than a visible dark band parked on white. */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-x-0 top-0 h-20 sm:h-24 lg:h-32"
+        style={{
+          background:
+            "linear-gradient(180deg, rgba(20,24,29,0.45) 0%, rgba(20,24,29,0.1) 40%, transparent 100%)",
+        }}
+      />
+      {/* Bottom blend — carries the light section into TrainerShowcase's dark
+          top. Strength matches TrainerShowcase's top blend so the dark return
+          is anticipated here, not pasted on below. */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-x-0 bottom-0 h-20 sm:h-24 lg:h-32"
+        style={{
+          background:
+            "linear-gradient(0deg, rgba(20,24,29,0.18) 0%, transparent 100%)",
+        }}
+      />
+      {/* Edge vignette — invisible perimeter depth so the section reads as a
+          contained volume rather than a flat white field */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0"
+        style={{
+          background:
+            "radial-gradient(ellipse 130% 100% at 50% 35%, transparent 55%, rgba(20,24,29,0.06) 100%)",
+        }}
+      />
+      {/* Warm radial wash — inherited from the Testimonials light section so
+          every light section shares the same warm ambient light source, not a
+          different temperature per band. */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0"
+        style={{
+          background:
+            "radial-gradient(ellipse 70% 60% at 50% 35%, rgba(255,222,1,0.03) 0%, transparent 65%)",
+        }}
+      />
+      <div className="relative z-10 flex flex-col gap-10">
         <SectionHeader
           eyebrow="Inside The Gym"
           heading="Everything you need, nothing you're paying extra for"
