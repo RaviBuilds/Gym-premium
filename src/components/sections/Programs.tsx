@@ -7,39 +7,151 @@ import { programs } from "@/content/programs";
 /**
  * Programs — Homepage-Architecture.md §3 Programs.
  *
- * The entire section is wrapped in ProgramsEnvironment, which creates a
- * premium, cinematic backdrop that continues the Hero's immersive feel. It
- * establishes a fixed background image with atmospheric overlays, ensuring a
- * seamless visual transition from the preceding TrustStrip section.
- *
- * The content itself remains unchanged, preserving the original layout of
- * program cards and the mid-section TrainingBanner. Text and UI elements have
- * had their tones adjusted to maintain high contrast and readability against
- * the new dark background.
+ * Opens with a full-width environment image that makes the section feel
+ * like walking into a premium luxury gym. The image is architecture, not
+ * decoration: layered directional overlays (Ink at reduced opacity as
+ * gradient, per §3.1) keep brightness ~35% so the heading stays readable,
+ * while a bottom blend dissolves the image into the section's dark canvas
+ * so it never ends abruptly. Static — no parallax; the TrainingBanner
+ * below is this section's one Tier-2 depth cue.
  */
 export function Programs() {
   const firstRow = programs.slice(0, 3);
   const secondRow = programs.slice(3);
 
   return (
-    <div>
-      <div className="flex flex-col gap-10">
-        <div className="flex flex-col gap-3 text-left sm:text-center lg:items-start lg:text-left">
-          <AnimationWrapper variant="fade-up">
-            <Eyebrow tone="dark">What We Offer</Eyebrow>
-          </AnimationWrapper>
-          <KineticHeadline
-            as="h2"
-            text="Nine ways to get after it"
-            className="font-display text-section text-white lg:text-section-lg"
-          />
-          <AnimationWrapper variant="fade-up" delay={0.35}>
-            <BodyText size="large" className="text-text-secondary-dark">
-              From crossfit to rock climbing, every discipline is coached, not
-              just supervised.
-            </BodyText>
-          </AnimationWrapper>
+    <div
+      className="relative"
+      style={{
+        background: `
+          linear-gradient(180deg, 
+            rgb(20, 24, 29) 0%, 
+            rgb(25, 28, 33) 8%,
+            rgb(28, 31, 36) 15%,
+            rgb(30, 33, 38) 25%,
+            rgb(32, 35, 40) 40%,
+            rgb(33, 36, 41) 60%,
+            rgb(32, 35, 40) 75%,
+            rgb(30, 33, 38) 90%,
+            rgb(28, 31, 36) 100%
+          )
+        `,
+      }}
+    >
+      {/* Environment image — establishing shot, not a second hero. Reduced
+          height (~28% shorter than V1) so it reads as atmosphere, not a
+          competing focal point. All overlays are directional gradients using
+          Ink at reduced opacity (§3.1) — each tuned to be individually
+          invisible while collectively creating perceived depth: top fade
+          blends from TrustStrip, base veil holds brightness ~35%, amber glow
+          warms the heading area, vignette adds edge depth, a left-side depth
+          gradient adds perceived lighting, and the bottom blend uses a
+          5-stop gradual dissolve so the image completely disappears into the
+          section background with zero visible edge. Static — no parallax. */}
+      <div className="relative h-[280px] w-full overflow-hidden sm:h-[320px] lg:h-[380px]">
+        <Image
+          src="/images/programs/programs-environment.webp"
+          alt=""
+          fill
+          sizes="100vw"
+          className="object-cover"
+        />
+
+        {/* Top fade — soft blend from the dark TrustStrip above */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-x-0 top-0 h-16 sm:h-20 lg:h-24"
+          style={{
+            background:
+              "linear-gradient(180deg, rgba(20,24,29,0.45) 0%, transparent 100%)",
+          }}
+        />
+
+        {/* Base brightness veil — keeps image visible at ~35-40% brightness */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 bg-ink/25"
+        />
+
+        {/* Warm amber radial glow — diffuse, low opacity, warms heading area */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0"
+          style={{
+            background:
+              "radial-gradient(ellipse 70% 60% at 25% 70%, rgba(255,222,1,0.06) 0%, transparent 65%)",
+          }}
+        />
+
+        {/* Soft vignette — invisible edge depth */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0"
+          style={{
+            background:
+              "radial-gradient(ellipse 130% 100% at 50% 35%, transparent 55%, rgba(20,24,29,0.22) 100%)",
+          }}
+        />
+
+        {/* Left-side depth gradient — subtle perceived lighting from the
+            right, adds depth without a visible effect */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0"
+          style={{
+            background:
+              "linear-gradient(90deg, rgba(20,24,29,0.12) 0%, transparent 45%)",
+          }}
+        />
+
+        {/* Bottom blend — 5-stop gradual dissolve so the image completely
+            disappears into the section background (rgb(20,24,29)) with zero
+            visible horizontal edge */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-x-0 bottom-0 h-24 sm:h-28 lg:h-32"
+          style={{
+            background:
+              "linear-gradient(180deg, transparent 0%, rgba(20,24,29,0.2) 30%, rgba(20,24,29,0.55) 60%, rgba(20,24,29,0.85) 80%, rgba(20,24,29,1) 100%)",
+          }}
+        />
+
+        {/* Section heading — positioned higher inside the image for breathing
+            room. Typography unchanged, only bottom padding increased. */}
+        <div className="absolute inset-x-0 bottom-0 z-10 px-4 pb-12 sm:px-6 sm:pb-14 lg:px-12 lg:pb-16 wide:px-20">
+          <div className="flex flex-col gap-3 text-left sm:text-center lg:items-start lg:text-left">
+            <AnimationWrapper variant="fade-up">
+              <Eyebrow tone="dark">What We Offer</Eyebrow>
+            </AnimationWrapper>
+            <KineticHeadline
+              as="h2"
+              text="Nine ways to get after it"
+              className="font-display text-section text-white lg:text-section-lg"
+            />
+            <AnimationWrapper variant="fade-up" delay={0.35}>
+              <BodyText size="large" className="text-text-secondary-dark">
+                From crossfit to rock climbing, every discipline is coached, not
+                just supervised.
+              </BodyText>
+            </AnimationWrapper>
+          </div>
         </div>
+      </div>
+
+      {/* Emergence gradient — soft shadow slightly darker than the section bg
+          that cards appear to rise out of. Bridges the image dissolve into
+          the card area without a hard cut. Fades to transparent within
+          80-96px so it never creates a visible band. */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-x-0 top-[280px] z-0 h-20 sm:top-[320px] sm:h-24 lg:top-[380px] lg:h-24"
+        style={{
+          background:
+            "linear-gradient(180deg, rgba(8,10,13,0.3) 0%, transparent 100%)",
+        }}
+      />
+
+      <div className="relative z-10 flex flex-col gap-10 pt-10">
         <p className="-mt-4 flex items-center gap-2 font-body text-caption font-semibold uppercase tracking-wide text-text-secondary-dark sm:hidden">
           Swipe to explore all 9 programs
           <Icon icon={ArrowRight} size="sm" aria-hidden />
@@ -58,7 +170,7 @@ export function Programs() {
 
       <TrainingBanner />
 
-      <div className="flex flex-col gap-10">
+      <div className="relative z-10 flex flex-col gap-10">
         <CardGrid columns={3}>
           {secondRow.map((program, index) => (
             <ProgramCard
