@@ -2,29 +2,81 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import { Card, CardMedia } from "./Card";
 import { Badge } from "./Badge";
 import { Heading, BodyText } from "./Heading";
 import { Icon } from "./Icon";
 import { cn } from "@/lib/utils";
+import { getStaggerDelay } from "@/lib/design-tokens";
 import type { Program } from "@/types/content";
 
 /**
- * Per-slug focal point overrides — the shared card crop (4:5 mobile/desktop,
- * 16:10 tablet) center-crops by default, which clips the actual subject on
- * a few source photos shot off-center. Cardio's source photo places the
- * subject in the upper-right two-thirds of the frame, so a plain `center`
- * crop loses most of it; kick-boxing and rock-climbing are shot portrait
- * with the subject high in frame, so they need to anchor toward the top
- * rather than vertical-center. Every other program's source photo is
- * already centered on its subject and is left on the CardMedia default.
+ * Per-slug focal point overrides — the shared card crop (4:5 mobile/desktop)
+ * center-crops by default, which clips the actual subject on a few source
+ * photos shot off-center. Cardio's source photo places the subject in the
+ * upper-right two-thirds of the frame, so a plain `center` crop loses most
+ * of it; kick-boxing and rock-climbing are shot portrait with the subject
+ * high in frame, so they need to anchor toward the top rather than
+ * vertical-center. Every other program's source photo is already centered on
+ * its subject and is left on the CardMedia default.
  */
 const focalPointOverrides: Partial<Record<Program["slug"], string>> = {
   cardio: "object-[78%_28%]",
   "kick-boxing": "object-[50%_15%]",
   "rock-climbing": "object-[50%_10%]",
+};
+
+/**
+ * Premium choreography tokens — the ProgramCard `motion="premium"` mode's
+ * additive motion vocabulary. Reveal travel (14px) sits on the 8px spacing
+ * scale and inside the 12–18px premium brief; duration 0.7s is the premium
+ * range; the easing reuses the exact curve Hero's CTA already uses
+ * (`[0.22, 1, 0.36, 1]`) rather than inventing a new one. The inner content
+ * stagger (70ms between image/title/description/CTA) matches the premium
+ * 60–90ms brief. Reduced motion: when `prefers-reduced-motion` is active,
+ * the whole premium path collapses to the plain static rendering — the
+ * `motion="premium"` flag is effectively ignored and the final DOM state is
+ * shown immediately, matching every other motion primitive's contract.
+ */
+const PREMIUM_REVEAL = {
+  hidden: { opacity: 0, y: 14, scale: 0.97 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    scale: 1,
+    transition: {
+      duration: 0.7,
+      ease: [0.22, 1, 0.36, 1],
+      when: "beforeChildren" as const,
+      staggerChildren: 0.07,
+    },
+  },
+} as const;
+
+const PREMIUM_ITEM = {
+  hidden: { opacity: 0, y: 8 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.4, ease: [0.22, 1, 0.36, 1] as const },
+  },
+} as const;
+
+/** Breathing loop — near-invisible ambient scale on the image layer only.
+ *  Not `as const` on the whole object — Framer Motion requires mutable
+ *  (non-readonly) keyframe arrays for `scale` and `times`. `as const` is
+ *  applied only to the `ease` string so it narrows to the literal `"easeInOut"`
+ *  Easing type rather than widening to `string`. */
+const PREMIUM_BREATHE = {
+  animate: { scale: [1, 1.03, 1] },
+  transition: {
+    duration: 14,
+    ease: "easeInOut" as const,
+    times: [0, 0.5, 1],
+    repeat: Infinity,
+  },
 };
 
 /**
@@ -40,18 +92,37 @@ const focalPointOverrides: Partial<Record<Program["slug"], string>> = {
  * The outer motion.div layers a subtle whileHover scale on top of Card's own
  * translateY/shadow lift rather than modifying Card itself, so TrainerCard/
  * LocationCard (which also compose Card) are unaffected.
+ *
+ * Optional `motion="premium"` mode (default `"standard"` preserves the exact
+ * historical behavior): adds the premium cinematic interactions described in
+ * the Phase 2 brief — scroll-reveal with reduced travel + settle (14px,
+ * 0.7s, premium ease), 1.04 hover zoom, an ultra-slow ambient image breathe,
+ * and a fine inner content stagger (image → title → description → CTA). All
+ * animation is transform/opacity only (no layout reflow, no per-frame
+ * box-shadow). Under `prefers-reduced-motion` the premium flag is ignored
+ * and the card renders identically to the standard path.
  */
 export function ProgramCard({
   program,
   index,
   featured = false,
+  motion: motionMode = "standard",
 }: {
   program: Program;
   index: number;
   featured?: boolean;
+  /** `"standard"` (default) = the original static reveal-less card. `"premium"`
+   *  enables the Phase 2 cinematic choreography (scroll reveal, hover zoom
+   *  1.04, image breathe, inner content stagger). `"premium"` collapses to
+   *  `"standard"` under `prefers-reduced-motion`. */
+  motion?: "standard" | "premium";
 }) {
+  const prefersReducedMotion = useReducedMotion();
+  const premium = motionMode === "premium" && !prefersReducedMotion;
+
   const number = String(index + 1).padStart(2, "0");
   const accessibleLabel = `${program.name} training at Infiniti Fitness — view program details`;
+  const delay = getStaggerDelay(index);
 
   return (
     <Link
@@ -61,8 +132,24 @@ export function ProgramCard({
     >
       <motion.div
         className="h-full"
-        whileHover={{ scale: 1.012 }}
-        transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+        {...(premium
+          ? {
+              // Premium: the outer wrapper owns the scroll-reveal only. The
+              // luxury hover lift/shadow is Card's own `whileHover` and the
+              // image zoom is the card's internal 1.04 `lg:group-hover:scale`
+              // — no outer whileHover here, so the reveal `transition` never
+              // collides with a hover transition on the same element.
+              initial: PREMIUM_REVEAL.hidden,
+              whileInView: PREMIUM_REVEAL.visible,
+              viewport: { once: true, amount: 0.2 },
+              transition: { delay },
+            }
+          : {
+              // Standard (legacy) behavior unchanged: outer micro-scale on
+              // hover layered over Card's own translateY/shadow lift.
+              whileHover: { scale: 1.012 },
+              transition: { duration: 0.22, ease: [0.16, 1, 0.3, 1] },
+            })}
       >
         <Card
           className={cn(
@@ -73,16 +160,36 @@ export function ProgramCard({
           )}
         >
           <CardMedia ratio="landscape" className="aspect-[4/5] sm:aspect-[16/10] lg:aspect-[4/5]">
-            <Image
-              src={program.imageSrc}
-              alt={program.imageAlt}
-              fill
-              sizes="(min-width: 1440px) 400px, (min-width: 1024px) calc((100vw - 112px) / 3), (min-width: 640px) 45vw, 85vw"
-              className={cn(
-                "object-cover transition-transform duration-500 ease-out lg:group-hover:scale-[1.08]",
-                focalPointOverrides[program.slug] ?? "object-center"
-              )}
-            />
+            {premium ? (
+              <motion.div
+                aria-hidden="true"
+                className="absolute inset-0 will-change-transform"
+                animate={PREMIUM_BREATHE.animate}
+                transition={PREMIUM_BREATHE.transition}
+              >
+                <Image
+                  src={program.imageSrc}
+                  alt={program.imageAlt}
+                  fill
+                  sizes="(min-width: 1440px) 400px, (min-width: 1024px) calc((100vw - 112px) / 3), (min-width: 640px) 45vw, 85vw"
+                  className={cn(
+                    "object-cover transition-transform duration-500 ease-out lg:group-hover:scale-[1.04]",
+                    focalPointOverrides[program.slug] ?? "object-center"
+                  )}
+                />
+              </motion.div>
+            ) : (
+              <Image
+                src={program.imageSrc}
+                alt={program.imageAlt}
+                fill
+                sizes="(min-width: 1440px) 400px, (min-width: 1024px) calc((100vw - 112px) / 3), (min-width: 640px) 45vw, 85vw"
+                className={cn(
+                  "object-cover transition-transform duration-500 ease-out lg:group-hover:scale-[1.08]",
+                  focalPointOverrides[program.slug] ?? "object-center"
+                )}
+              />
+            )}
 
             {/* Always-on depth: bottom gradient + soft vignette, independent of hover. */}
             <div
@@ -95,7 +202,14 @@ export function ProgramCard({
             />
 
             {featured && (
-              <Badge className="pointer-events-none absolute left-3 top-3 z-10">Flagship Format</Badge>
+              <Badge
+                className={cn(
+                  "pointer-events-none absolute left-3 top-3 z-10",
+                  premium && "transition-[filter] duration-500 ease-out lg:group-hover:brightness-110"
+                )}
+              >
+                Flagship Format
+              </Badge>
             )}
 
             <span
@@ -107,26 +221,61 @@ export function ProgramCard({
             </span>
           </CardMedia>
 
-          <div className="flex flex-1 flex-col">
-            <Heading level="subsection" as="h3" className="text-ink">
-              {program.name}
-            </Heading>
-            <BodyText size="standard" className="mt-2 text-text-secondary">
-              {program.hook}
-            </BodyText>
+          {premium ? (
+            // Premium content choreography — pure variant propagation, no own
+            // initial/animate: the outer wrapper's `when: "beforeChildren"` +
+            // `staggerChildren: 0.07` drives this sequence (image/card reveal
+            // first, then title → description → CTA at ~70ms steps), and the
+            // per-card `delay` (getStaggerDelay(index)) offsets the whole group
+            // so the continuous 0–8 stagger across both rows is preserved. The
+            // container is a motion.div (with no own initial/animate) so the
+            // outer wrapper's variant state propagates through it to the leaf
+            // motion.divs below — a plain div would break that propagation.
+            <motion.div className="flex flex-1 flex-col">
+              <motion.div variants={PREMIUM_ITEM}>
+                <Heading level="subsection" as="h3" className="text-ink">
+                  {program.name}
+                </Heading>
+              </motion.div>
+              <motion.div variants={PREMIUM_ITEM}>
+                <BodyText size="standard" className="mt-2 text-text-secondary">
+                  {program.hook}
+                </BodyText>
+              </motion.div>
+              <motion.div variants={PREMIUM_ITEM} className="mt-4 flex items-center gap-2 font-body text-caption font-semibold uppercase tracking-wide text-ink">
+                <span className="relative">
+                  View Program
+                  <span className="absolute inset-x-0 -bottom-1 h-px origin-left scale-x-100 bg-ink transition-transform duration-300 ease-out lg:scale-x-0 lg:group-hover:scale-x-100" />
+                </span>
+                <Icon
+                  icon={ArrowRight}
+                  size="sm"
+                  className="transition-transform duration-300 ease-out lg:group-hover:translate-x-1"
+                />
+              </motion.div>
+            </motion.div>
+          ) : (
+            <div className="flex flex-1 flex-col">
+              <Heading level="subsection" as="h3" className="text-ink">
+                {program.name}
+              </Heading>
+              <BodyText size="standard" className="mt-2 text-text-secondary">
+                {program.hook}
+              </BodyText>
 
-            <div className="mt-4 flex items-center gap-2 font-body text-caption font-semibold uppercase tracking-wide text-ink">
-              <span className="relative">
-                View Program
-                <span className="absolute inset-x-0 -bottom-1 h-px origin-left scale-x-100 bg-ink transition-transform duration-300 ease-out lg:scale-x-0 lg:group-hover:scale-x-100" />
-              </span>
-              <Icon
-                icon={ArrowRight}
-                size="sm"
-                className="transition-transform duration-300 ease-out lg:group-hover:translate-x-1"
-              />
+              <div className="mt-4 flex items-center gap-2 font-body text-caption font-semibold uppercase tracking-wide text-ink">
+                <span className="relative">
+                  View Program
+                  <span className="absolute inset-x-0 -bottom-1 h-px origin-left scale-x-100 bg-ink transition-transform duration-300 ease-out lg:scale-x-0 lg:group-hover:scale-x-100" />
+                </span>
+                <Icon
+                  icon={ArrowRight}
+                  size="sm"
+                  className="transition-transform duration-300 ease-out lg:group-hover:translate-x-1"
+                />
+              </div>
             </div>
-          </div>
+          )}
         </Card>
       </motion.div>
     </Link>

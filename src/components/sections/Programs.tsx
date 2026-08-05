@@ -156,13 +156,14 @@ export function Programs() {
           Swipe to explore all 9 programs
           <Icon icon={ArrowRight} size="sm" aria-hidden />
         </p>
-        <CardGrid columns={3}>
+        <CardGrid columns={3} reveal="premium">
           {firstRow.map((program, index) => (
             <ProgramCard
               key={program.slug}
               program={program}
               index={index}
               featured={program.slug === "crossfit"}
+              motion="premium"
             />
           ))}
         </CardGrid>
@@ -171,13 +172,14 @@ export function Programs() {
       <TrainingBanner />
 
       <div className="relative z-10 flex flex-col gap-10">
-        <CardGrid columns={3}>
+        <CardGrid columns={3} reveal="premium">
           {secondRow.map((program, index) => (
             <ProgramCard
               key={program.slug}
               program={program}
               index={index + firstRow.length}
               featured={program.slug === "crossfit"}
+              motion="premium"
             />
           ))}
         </CardGrid>

@@ -28,12 +28,29 @@ import { getStaggerDelay } from "@/lib/design-tokens";
  * reveal, using each child's own `key` for React's reconciliation *and* as
  * the stagger index source (via Children.forEach), so call sites don't
  * need to pass a separate getKey function either.
+ *
+ * The `reveal` prop adds a choreography escape hatch for premium card
+ * sections (Programs). `"standard"` (the default) is the exact historical
+ * behavior — every child wrapped in `AnimationWrapper` with a
+ * `getStaggerDelay` stagger. `"premium"` renders children unwrapped and
+ * lets each card own its own scroll-triggered reveal (ProgramCard does
+ * this via its own `motion="premium"` mode, using its `index` to compute
+ * the same `getStaggerDelay` delay, so the continuous 0–8 stagger across
+ * both Programs rows is preserved). `"none"` renders with no reveal
+ * wrapper at all.
  */
 export interface CardGridProps {
   children: ReactNode;
   /** Desktop column count. Tablet always shows 2 (except columns=2, which stays 2). */
   columns: 2 | 3 | 4;
   className?: string;
+  /** Reveal choreography for the wrapped children. Defaults to `"standard"`.
+   *  - `"standard"`: every child wrapped in `AnimationWrapper` + `getStaggerDelay`
+   *    stagger (the original, unchanged shared reveal).
+   *  - `"premium"`: children render unwrapped; each child owns its own
+   *    scroll-triggered reveal (ProgramCard's `motion="premium"` mode).
+   *  - `"none"`: children render with no reveal wrapper. */
+  reveal?: "standard" | "premium" | "none";
 }
 
 const desktopColsMap = {
@@ -48,7 +65,7 @@ const tabletColsMap = {
   4: "sm:grid-cols-2",
 } as const;
 
-export function CardGrid({ children, columns, className }: CardGridProps) {
+export function CardGrid({ children, columns, className, reveal = "standard" }: CardGridProps) {
   let index = 0;
 
   return (
@@ -66,6 +83,9 @@ export function CardGrid({ children, columns, className }: CardGridProps) {
     >
       {Children.map(children, (child) => {
         if (!isValidElement(child)) return child;
+        // Premium/none: render the child as-is — the card owns its own reveal
+        // (premium) or none is wanted. Standard: the original shared wrap.
+        if (reveal !== "standard") return child;
         const delay = getStaggerDelay(index);
         index += 1;
         return (
