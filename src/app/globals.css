@@ -1,0 +1,250 @@
+@import "tailwindcss";
+
+/**
+ * Design tokens — generated directly from /docs/Visual-Design-Specification.md.
+ * Every value here is traceable to a section of that document. Do not introduce
+ * a new color, size, or shadow ad hoc in a component — add it here first so the
+ * whole system stays in one place (Visual-Design-Specification.md §15, rule:
+ * "One type system, one color system... applied without exception").
+ */
+@theme {
+  /* ---------------------------------------------------------------------
+   * Color — §4 Color System
+   * ------------------------------------------------------------------- */
+  --color-brand-yellow: #ffde01; /* Primary Brand Yellow — spotlight, not wallpaper */
+  --color-ink: #14181d; /* Primary Dark (Ink) */
+  --color-surface-light: #faf9f6; /* default page background */
+  --color-surface-card: #ffffff; /* card backgrounds on Surface Light */
+  --color-border-subtle: #e5e3dc; /* card borders / dividers on light bg */
+  --color-border-dark: #2a2f36; /* dividers on dark sections */
+  --color-text-primary: #14181d; /* body copy on light backgrounds */
+  --color-text-secondary: #5b6069; /* supporting/caption text on light backgrounds */
+  --color-text-primary-dark: #ffffff; /* body copy on dark backgrounds */
+  --color-text-secondary-dark: #a8acb3; /* supporting/caption text on dark backgrounds */
+  --color-success: #1e8e5a;
+  --color-warning: #b7791f;
+  --color-error: #c13b3b;
+  --color-whatsapp: #25d366; /* deliberate one-off exception — §8 Iconography */
+
+  /* ---------------------------------------------------------------------
+   * Typography — §3 Typography System
+   * next/font exposes CSS variables (--font-archivo-black / --font-inter)
+   * consumed here; see src/lib/fonts.ts.
+   * ------------------------------------------------------------------- */
+  --font-display: var(--font-archivo-black), ui-sans-serif, system-ui, sans-serif;
+  --font-body: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+
+  /* Hero Headline — 64px desktop / 36px mobile, Black/900, lh 1.05, ls -0.02em */
+  --text-hero: 2.25rem;
+  --text-hero--line-height: 1.05;
+  --text-hero--letter-spacing: -0.02em;
+  --text-hero--font-weight: 900;
+  --text-hero-lg: 4rem;
+  --text-hero-lg--line-height: 1.05;
+  --text-hero-lg--letter-spacing: -0.02em;
+  --text-hero-lg--font-weight: 900;
+
+  /* Hero Display — deliberate one-off exception to the shared Hero scale
+     above, reserved for the homepage Hero's headline ONLY. Not exposed via
+     Heading's `level` prop — every other headline on the site (including
+     any future `level="hero"` usage) stays on --text-hero/-lg. 104px on
+     desktop (unchanged). Mobile is its own tuned value, not a scaled-down
+     copy of the desktop size: at 72px "burn fat, not muscle." had no room
+     to wrap two words per line inside a 360-390px viewport, so every word
+     landed on its own line and the block ran taller than the Hero itself,
+     clipping "muscle." below the fold. 44px lets it wrap as two natural
+     two-word lines ("burn fat," / "not muscle.") while still reading
+     noticeably larger/heavier than the --text-hero line above it. Line-
+     height opened slightly (1 → 1.1) so the two wrapped lines don't touch —
+     lh:1 works on desktop only because each span there also renders as a
+     single line. */
+  --text-hero-display: 2.75rem;
+  --text-hero-display--line-height: 1.1;
+  --text-hero-display--letter-spacing: -0.02em;
+  --text-hero-display--font-weight: 900;
+  --text-hero-display-lg: 6.5rem;
+  --text-hero-display-lg--line-height: 1;
+  --text-hero-display-lg--letter-spacing: -0.03em;
+  --text-hero-display-lg--font-weight: 900;
+
+  /* Section Heading (H2) — 48px desktop / 28px mobile, Black/900, lh 1.1, ls -0.01em */
+  --text-section: 1.75rem;
+  --text-section--line-height: 1.1;
+  --text-section--letter-spacing: -0.01em;
+  --text-section--font-weight: 900;
+  --text-section-lg: 3rem;
+  --text-section-lg--line-height: 1.1;
+  --text-section-lg--letter-spacing: -0.01em;
+  --text-section-lg--font-weight: 900;
+
+  /* Subsection Heading (H3) — 28px desktop / 20px mobile, Bold/700, lh 1.2 */
+  --text-subsection: 1.25rem;
+  --text-subsection--line-height: 1.2;
+  --text-subsection--font-weight: 700;
+  --text-subsection-lg: 1.75rem;
+  --text-subsection-lg--line-height: 1.2;
+  --text-subsection-lg--font-weight: 700;
+
+  /* Eyebrow label — 14px desktop / 13px mobile, Semibold/600, lh 1.4, ls 0.12em, uppercase (apply uppercase in component) */
+  --text-eyebrow: 0.8125rem;
+  --text-eyebrow--line-height: 1.4;
+  --text-eyebrow--letter-spacing: 0.12em;
+  --text-eyebrow--font-weight: 600;
+  --text-eyebrow-lg: 0.875rem;
+  --text-eyebrow-lg--line-height: 1.4;
+  --text-eyebrow-lg--letter-spacing: 0.12em;
+  --text-eyebrow-lg--font-weight: 600;
+
+  /* Body — large — 20px desktop / 18px mobile, Regular/400, lh 1.5 */
+  --text-body-lg: 1.125rem;
+  --text-body-lg--line-height: 1.5;
+  --text-body-lg--font-weight: 400;
+  --text-body-lg-desktop: 1.25rem;
+  --text-body-lg-desktop--line-height: 1.5;
+  --text-body-lg-desktop--font-weight: 400;
+
+  /* Body — standard — 16px both, Regular/400, lh 1.6 */
+  --text-body: 1rem;
+  --text-body--line-height: 1.6;
+  --text-body--font-weight: 400;
+
+  /* Body — small / caption — 14px desktop / 13px mobile, Regular/400, lh 1.5 */
+  --text-caption: 0.8125rem;
+  --text-caption--line-height: 1.5;
+  --text-caption--font-weight: 400;
+  --text-caption-lg: 0.875rem;
+  --text-caption-lg--line-height: 1.5;
+  --text-caption-lg--font-weight: 400;
+
+  /* Button label — 16px both, Semibold/600, lh 1, ls 0.02em */
+  --text-button: 1rem;
+  --text-button--line-height: 1;
+  --text-button--letter-spacing: 0.02em;
+  --text-button--font-weight: 600;
+
+  /* Stat number (Trust Strip) — 40px desktop / 28px mobile, Black/900, lh 1, ls -0.01em */
+  --text-stat: 1.75rem;
+  --text-stat--line-height: 1;
+  --text-stat--letter-spacing: -0.01em;
+  --text-stat--font-weight: 900;
+  --text-stat-lg: 2.5rem;
+  --text-stat-lg--line-height: 1;
+  --text-stat-lg--letter-spacing: -0.01em;
+  --text-stat-lg--font-weight: 900;
+
+  /* ---------------------------------------------------------------------
+   * Breakpoints — §2 Layout System
+   * sm(640)/lg(1024) already match Tablet/Desktop thresholds exactly;
+   * "wide" is added for the 1440px Large Desktop tier.
+   * ------------------------------------------------------------------- */
+  --breakpoint-wide: 1440px;
+
+  /* ---------------------------------------------------------------------
+   * Layout — §2 Layout System
+   * Tailwind's default spacing scale (4px steps) already lands exactly on
+   * the spec's 8/16/24/32/48/64/96/128 scale at p-2/4/6/8/12/16/24/32 —
+   * see src/lib/design-tokens.ts for the documented mapping. No override
+   * needed here.
+   * ------------------------------------------------------------------- */
+  --container-content: 80rem; /* 1280px max content width */
+
+  /* ---------------------------------------------------------------------
+   * Radius — §6 Card Design
+   * Hard edges mean action (buttons/badges/dividers stay at 0, i.e.
+   * Tailwind's built-in rounded-none), soft edges mean content.
+   * ------------------------------------------------------------------- */
+  --radius-card: 6px;
+
+  /* ---------------------------------------------------------------------
+   * Shadows — §6 Card Design, §9 Button System
+   * ------------------------------------------------------------------- */
+  --shadow-card: 0 2px 8px rgb(20 24 29 / 0.08);
+  --shadow-card-hover: 0 20px 40px rgb(20 24 29 / 0.2);
+  --shadow-button: 0 4px 16px rgb(255 222 1 / 0.25);
+  --shadow-button-hover: 0 6px 20px rgb(255 222 1 / 0.35);
+  --shadow-glow-yellow: 0 8px 32px rgb(255 222 1 / 0.4);
+}
+
+/* ---------------------------------------------------------------------
+ * Featured program card glow — a slow breathing halo behind the single
+ * "flagship" ProgramCard (Crossfit) so it reads as premium without a
+ * static border that would compete with the photography. Pure CSS since
+ * it's a resting-state ambient loop, not a scroll/interaction-triggered
+ * effect — applied via `motion-safe:animate-[...]` at the call site so it
+ * never runs under prefers-reduced-motion (the card still gets the static
+ * glow shadow from its base box-shadow class either way).
+ * ------------------------------------------------------------------- */
+@keyframes card-glow {
+  0%,
+  100% {
+    box-shadow: 0 0 0 1px rgb(255 222 1 / 0.35), 0 0 24px rgb(255 222 1 / 0.15);
+  }
+  50% {
+    box-shadow: 0 0 0 1px rgb(255 222 1 / 0.55), 0 0 40px rgb(255 222 1 / 0.3);
+  }
+}
+
+/* ---------------------------------------------------------------------
+ * Active Scene Navigator badge glow — same breathing cadence/color as
+ * card-glow above, but built on filter: drop-shadow() rather than
+ * box-shadow, since the badge is clip-path hexagon and box-shadow only
+ * hugs the element's rectangular box, not its clipped silhouette.
+ * ------------------------------------------------------------------- */
+@keyframes badge-glow {
+  0%,
+  100% {
+    filter: drop-shadow(0 0 0 rgb(255 222 1 / 0.4)) drop-shadow(0 0 14px rgb(255 222 1 / 0.2))
+      drop-shadow(0 6px 10px rgb(0 0 0 / 0.45));
+  }
+  50% {
+    filter: drop-shadow(0 0 2px rgb(255 222 1 / 0.6)) drop-shadow(0 0 22px rgb(255 222 1 / 0.4))
+      drop-shadow(0 6px 10px rgb(0 0 0 / 0.45));
+  }
+}
+
+/* ---------------------------------------------------------------------
+ * Base layer
+ * ------------------------------------------------------------------- */
+@layer base {
+  * {
+    border-color: var(--color-border-subtle);
+  }
+
+  html {
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    background-color: var(--color-surface-light);
+    color: var(--color-text-primary);
+    font-family: var(--font-body);
+  }
+
+  /* Visible focus ring everywhere, on every focusable element — never suppressed.
+     Visual-Design-Specification.md §9/§13: 2px Primary Yellow, offset 2px,
+     keyboard-only (not shown on mouse click). */
+  :focus-visible {
+    outline: 2px solid var(--color-brand-yellow);
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+
+  ::selection {
+    background-color: var(--color-brand-yellow);
+    color: var(--color-ink);
+  }
+
+  /* Defense-in-depth for plain CSS transitions (e.g. Button hover color-swap)
+     that aren't driven by Framer Motion's own useReducedMotion checks. */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
