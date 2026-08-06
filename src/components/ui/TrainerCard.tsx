@@ -27,7 +27,7 @@ import type { Trainer } from "@/types/content";
  */
 export function TrainerCard({ trainer }: { trainer: Trainer }) {
   return (
-    <div className="group h-full">
+    <div className="group h-full transition-transform duration-200 ease-out active:scale-[0.99]">
       <Card className="flex h-full flex-col">
         <CardMedia ratio="portrait" className="aspect-[3/4]">
           <Image
@@ -44,7 +44,11 @@ export function TrainerCard({ trainer }: { trainer: Trainer }) {
           )}
         </CardMedia>
         <Heading level="subsection" as="h3" className="text-ink">
-          <span className="bg-linear-to-r from-brand-yellow to-brand-yellow bg-[length:0%_2px] bg-left-bottom bg-no-repeat pb-1 transition-[background-size] duration-300 ease-out group-hover:bg-[length:100%_2px]">
+          {/* Exit-easing asymmetry: base duration-400 (applies on hover-out,
+              so the underline retracts slower than it grows),
+              group-hover:duration-300 (applies on hover-in). background-size
+              only — no layout properties. */}
+          <span className="bg-linear-to-r from-brand-yellow to-brand-yellow bg-[length:0%_2px] bg-left-bottom bg-no-repeat pb-1 transition-[background-size] duration-400 ease-out group-hover:bg-[length:100%_2px] group-hover:duration-300">
             {trainer.name}
           </span>
         </Heading>

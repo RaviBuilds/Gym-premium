@@ -26,7 +26,13 @@ export interface AccordionItemData {
  * getDisclosureIds — the same id-pairing helper any future Tabs component
  * will also use, per Design-System.md §11.
  */
-export function Accordion({ items, className }: { items: AccordionItemData[]; className?: string }) {
+export function Accordion({
+  items,
+  className,
+}: {
+  items: AccordionItemData[];
+  className?: string;
+}) {
   const [openIndexes, setOpenIndexes] = useState<Set<number>>(new Set());
   const prefersReducedMotion = useReducedMotion();
 
@@ -46,7 +52,9 @@ export function Accordion({ items, className }: { items: AccordionItemData[]; cl
     <div className={cn("divide-y divide-border-subtle", className)}>
       {items.map((item, index) => {
         const isOpen = openIndexes.has(index);
-        const { triggerId, panelId } = getDisclosureIds(`faq-${slugify(item.question)}`);
+        const { triggerId, panelId } = getDisclosureIds(
+          `faq-${slugify(item.question)}`,
+        );
 
         return (
           <div key={triggerId}>
@@ -57,13 +65,23 @@ export function Accordion({ items, className }: { items: AccordionItemData[]; cl
                 aria-expanded={isOpen}
                 aria-controls={panelId}
                 onClick={() => toggle(index)}
-                className="flex w-full items-center justify-between gap-4 py-5 text-left"
+                // active:scale-[0.99] — the one transform-only press affordance
+                // (GPU-accelerated, collapses under reduced motion via the
+                // globals.css transition kill-switch). No translate, no wobble.
+                className="group flex w-full items-center justify-between gap-4 py-5 text-left transition-transform duration-150 ease-out active:scale-[0.99]"
               >
-                <span className="font-body text-subsection font-bold text-ink">{item.question}</span>
+                <span
+                  className="font-body text-subsection font-bold text-ink transition-[color,background-size] duration-300 ease-out group-hover:bg-[length:100%_1px] group-hover:text-text-secondary group-hover:duration-150 bg-linear-to-r from-text-secondary to-text-secondary bg-[length:0%_1px] bg-left-bottom bg-no-repeat"
+                >
+                  {item.question}
+                </span>
                 <Icon
                   icon={ChevronDown}
                   size="default"
-                  className={cn("shrink-0 text-ink transition-transform duration-[250ms]", isOpen && "rotate-180")}
+                  className={cn(
+                    "shrink-0 text-ink transition-transform duration-[250ms] ease-out",
+                    isOpen && "rotate-180",
+                  )}
                 />
               </button>
             </h3>
@@ -73,13 +91,26 @@ export function Accordion({ items, className }: { items: AccordionItemData[]; cl
                   id={panelId}
                   role="region"
                   aria-labelledby={triggerId}
-                  initial={prefersReducedMotion ? { height: "auto", opacity: 1 } : { height: 0, opacity: 0 }}
+                  initial={
+                    prefersReducedMotion
+                      ? { height: "auto", opacity: 1 }
+                      : { height: 0, opacity: 0 }
+                  }
                   animate={{ height: "auto", opacity: 1 }}
-                  exit={prefersReducedMotion ? { height: "auto", opacity: 1 } : { height: 0, opacity: 0 }}
-                  transition={{ duration: prefersReducedMotion ? 0 : 0.25, ease: [0.16, 1, 0.3, 1] }}
+                  exit={
+                    prefersReducedMotion
+                      ? { height: "auto", opacity: 1 }
+                      : { height: 0, opacity: 0 }
+                  }
+                  transition={{
+                    duration: prefersReducedMotion ? 0 : 0.25,
+                    ease: [0.16, 1, 0.3, 1],
+                  }}
                   className="overflow-hidden"
                 >
-                  <BodyText className="pb-5 text-text-secondary">{item.answer}</BodyText>
+                  <BodyText className="pb-5 text-text-secondary">
+                    {item.answer}
+                  </BodyText>
                 </motion.div>
               )}
             </AnimatePresence>

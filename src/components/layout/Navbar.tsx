@@ -35,7 +35,11 @@ export function Navbar() {
     <header className="sticky top-0 z-50 border-b border-border-dark bg-ink/95 backdrop-blur-sm">
       <Container>
         <div className="flex h-20 items-center justify-between">
-          <Link href="/" className="shrink-0" aria-label="Infiniti Fitness home">
+          <Link
+            href="/"
+            className="shrink-0"
+            aria-label="Infiniti Fitness home"
+          >
             <Image
               src="/images/brand/logo.png"
               alt="Infiniti Fitness"
@@ -55,7 +59,13 @@ export function Navbar() {
                     className="group relative font-body text-body font-medium text-white"
                   >
                     {item.label}
-                    <span className="absolute -bottom-1 left-0 h-0.5 w-0 bg-brand-yellow transition-all duration-200 ease-out group-hover:w-full" />
+                    {/* Exit-easing asymmetry: base duration-300 (applies on
+                        hover-out, so the underline retracts slower than it
+                        grows), group-hover:duration-200 (applies on
+                        hover-in). width is a cheap paint, not layout.
+                        group-focus-visible: gives keyboard users the same
+                        underline affordance pointer users have. */}
+                    <span className="absolute -bottom-1 left-0 h-0.5 w-0 bg-brand-yellow transition-[width] duration-300 ease-out group-hover:w-full group-hover:duration-200 group-focus-visible:w-full" />
                   </Link>
                 </li>
               ))}
@@ -85,10 +95,17 @@ export function Navbar() {
         {isMenuOpen && (
           <motion.div
             id="mobile-nav-panel"
-            initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0, height: 0 }}
+            initial={
+              prefersReducedMotion ? { opacity: 1 } : { opacity: 0, height: 0 }
+            }
             animate={{ opacity: 1, height: "auto" }}
-            exit={prefersReducedMotion ? { opacity: 1 } : { opacity: 0, height: 0 }}
-            transition={{ duration: prefersReducedMotion ? 0 : 0.25, ease: [0.16, 1, 0.3, 1] }}
+            exit={
+              prefersReducedMotion ? { opacity: 1 } : { opacity: 0, height: 0 }
+            }
+            transition={{
+              duration: prefersReducedMotion ? 0 : 0.25,
+              ease: [0.16, 1, 0.3, 1],
+            }}
             className="overflow-hidden border-t border-border-dark bg-ink lg:hidden"
           >
             <Container>
@@ -98,12 +115,19 @@ export function Navbar() {
                     key={item.href}
                     href={item.href}
                     onClick={() => setIsMenuOpen(false)}
-                    className="border-b border-border-dark py-4 font-body text-body-lg font-medium text-white last:border-b-0"
+                    // Exit-easing asymmetry: color-in 150ms, color-out 300ms.
+                    // translate-x micro-shift on hover/focus gives tactile
+                    // feedback without affecting layout (transform-only).
+                    className="border-b border-border-dark py-4 font-body text-body-lg font-medium text-white transition-[color,transform] duration-300 ease-out hover:-translate-x-1 hover:text-brand-yellow hover:duration-150 focus-visible:-translate-x-1 focus-visible:text-brand-yellow last:border-b-0"
                   >
                     {item.label}
                   </Link>
                 ))}
-                <ButtonLink href="/#free-trial" variant="primary" className="mt-4 justify-center">
+                <ButtonLink
+                  href="/#free-trial"
+                  variant="primary"
+                  className="mt-4 justify-center"
+                >
                   Book Free Trial
                 </ButtonLink>
               </nav>

@@ -50,14 +50,28 @@ export function Footer() {
                   {branch.name}
                 </Heading>
                 <div className="flex items-start gap-2">
-                  <Icon icon={MapPin} size="sm" className="mt-0.5 text-text-secondary-dark" />
-                  <BodyText size="standard" className="text-text-secondary-dark">
+                  <Icon
+                    icon={MapPin}
+                    size="sm"
+                    className="mt-0.5 text-text-secondary-dark"
+                  />
+                  <BodyText
+                    size="standard"
+                    className="text-text-secondary-dark"
+                  >
                     {branch.address}
                   </BodyText>
                 </div>
                 <div className="flex items-start gap-2">
-                  <Icon icon={Clock} size="sm" className="mt-0.5 text-text-secondary-dark" />
-                  <BodyText size="standard" className="text-text-secondary-dark">
+                  <Icon
+                    icon={Clock}
+                    size="sm"
+                    className="mt-0.5 text-text-secondary-dark"
+                  />
+                  <BodyText
+                    size="standard"
+                    className="text-text-secondary-dark"
+                  >
                     {branch.hours.days} · {branch.hours.unisex}
                     {branch.hours.ladiesOnly && (
                       <>
@@ -84,7 +98,10 @@ export function Footer() {
                     {/* min-h-11 (44px) meets the mobile touch-target minimum — §12 Mobile Experience */}
                     <Link
                       href={item.href}
-                      className="flex min-h-11 items-center font-body text-body text-text-secondary-dark hover:text-white"
+                      // Exit-easing asymmetry: color-in 150ms, color-out 300ms.
+                      // background-size underline affordance on hover/focus
+                      // (no layout properties).
+                      className="group flex min-h-11 items-center font-body text-body text-text-secondary-dark transition-[color,background-size] duration-300 ease-out hover:text-white hover:duration-150 bg-linear-to-r from-brand-yellow to-brand-yellow bg-[length:0%_1px] bg-left-bottom bg-no-repeat hover:bg-[length:100%_1px] focus-visible:bg-[length:100%_1px] focus-visible:text-white"
                     >
                       {item.label}
                     </Link>
@@ -100,14 +117,14 @@ export function Footer() {
             </Heading>
             <a
               href={`tel:${siteConfig.contact.phones[0]?.replace(/\s+/g, "")}`}
-              className="flex min-h-11 items-center gap-2 font-body text-body text-text-secondary-dark hover:text-white"
+              className="flex min-h-11 items-center gap-2 font-body text-body text-text-secondary-dark transition-colors duration-300 ease-out hover:text-white hover:duration-150"
             >
               <Icon icon={Phone} size="sm" />
               {siteConfig.contact.phones[0]}
             </a>
             <a
               href={`mailto:${siteConfig.contact.email}`}
-              className="flex min-h-11 items-center gap-2 font-body text-body text-text-secondary-dark hover:text-white"
+              className="flex items-center gap-2 font-body text-body text-text-secondary-dark transition-colors duration-300 ease-out hover:text-white hover:duration-150"
             >
               <Icon icon={Mail} size="sm" />
               {siteConfig.contact.email}

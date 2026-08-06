@@ -1,8 +1,7 @@
 import Image from "next/image";
 import { PageSection } from "@/components/layout";
 import { StatCounter } from "@/components/ui";
-import { AnimationWrapper, AnimatedDivider } from "@/components/motion";
-import { getStaggerDelay } from "@/lib/design-tokens";
+import { CameraGroup, AnimatedDivider } from "@/components/motion";
 
 /**
  * TrustStrip — Homepage-Architecture.md §2 Trust Strip.
@@ -13,23 +12,31 @@ import { getStaggerDelay } from "@/lib/design-tokens";
  * spec. "Since 2016" uses variant="static" per StatCounter's own doc
  * comment: a year shouldn't roll through every intermediate value.
  *
- * The section's signature move is the top accent rule: a single yellow
- * line draws itself left-to-right the instant this section enters view —
- * a "curtain opening on the credentials" beat that reads as this section's
- * own moment rather than another instance of the fade-up every section
- * uses. Every stat then lands in the same left-to-right sequence beneath
- * it (§10: "staggered slightly left-to-right"). No per-stat icon (elevation
- * pass removed it — a small line icon read as a generic dashboard-widget
- * tell rather than premium); the number alone is the anchor now. Vertical
- * dividers between stats (desktop only) grow into place on scroll rather
- * than appearing as a static border.
+ * ── Motion: two planes, not six ──────────────────────────────────────────
+ * A previous version gave each of the four stats its own `useCameraLayer`
+ * (via `index` → `indexLag`), plus separate subscriptions for the background
+ * texture and glow — six scroll listeners for a section the architecture
+ * defines as a single "Whole Statistics Plane." That per-stat depth was also
+ * imperceptible: a few pixels of amplitude spread across nine subscriptions'
+ * worth of measurement overhead.
  *
- * Atmosphere comes from two low-opacity layers rather than any icon or
- * card treatment: a near-invisible training-energy texture (8% opacity,
- * grayscale, heavily blurred) plus a soft off-center radial glow — the
- * same rim-light technique Hero uses for its own atmosphere, at a much
- * lower intensity so it stays a mood, not a light source competing with
- * the numbers.
+ *   Background Plane        texture + glow, merged into ONE CameraGroup.
+ *                            Still the section's own depth cue relative to
+ *                            the content in front of it — just one
+ *                            subscription instead of two.
+ *   Whole Statistics Plane   the divider + all four stats, as ONE rigid
+ *                            group. The row now moves as a single object;
+ *                            there is no depth differentiation between
+ *                            individual numbers, because nobody perceives
+ *                            four numbers as sitting at four different
+ *                            distances — they perceive one row.
+ *
+ * The `lg:divide-x` rules stay on the grid, which lives entirely *inside*
+ * the CameraGroup now, so dividers move with the numbers as one composition
+ * rather than staying pinned to a separate untransformed frame.
+ *
+ * This stays a Server Component: CameraGroup is itself the client boundary,
+ * so the section ships no additional hydration beyond the two motion layers.
  *
  * Spacing stays on "compact" (not "standard") deliberately: the Hero
  * already ends on its own dark fade, so this section needs a tight,
@@ -45,37 +52,43 @@ const stats = [
 export function TrustStrip() {
   return (
     <PageSection tone="dark" spacing="compact" className="relative overflow-hidden">
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-0 scale-110 opacity-[0.08] grayscale blur-2xl"
-      >
-        <Image src="/training-energy-banner.webp" alt="" fill className="object-cover" />
-      </div>
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-0"
-        style={{
-          background:
-            "radial-gradient(ellipse 70% 60% at 50% 30%, rgba(255,222,1,0.05) 0%, transparent 65%)",
-        }}
-      />
+      {/* Background Plane — texture + glow as one object, one subscription. */}
+      <CameraGroup depth="deepBackground" fill decorative>
+        <div className="relative h-full w-full scale-110 opacity-[0.08] grayscale blur-2xl">
+          <Image src="/training-energy-banner.webp" alt="" fill className="object-cover" />
+        </div>
+        <div
+          className="absolute inset-0"
+          style={{
+            background:
+              "radial-gradient(ellipse 70% 60% at 50% 30%, rgba(255,222,1,0.05) 0%, transparent 65%)",
+          }}
+        />
+      </CameraGroup>
+
+      {/* Deliberately NOT on a camera plane: this gradient's job is to blend
+          this section's edges into the Hero above and Programs below. It has to
+          stay welded to the section frame or the seam it hides would move. */}
       <div
         aria-hidden="true"
         className="pointer-events-none absolute inset-0 bg-gradient-to-b from-ink via-transparent to-ink"
       />
 
-      <AnimatedDivider
-        orientation="horizontal"
-        className="relative mx-auto mb-10 h-px w-16 bg-brand-yellow lg:mb-12 lg:w-24"
-      />
+      {/* Whole Statistics Plane — divider + all four stats, one rigid group. */}
+      <CameraGroup depth="interactive" className="relative">
+        <AnimatedDivider
+          orientation="horizontal"
+          className="mx-auto mb-10 h-px w-16 bg-brand-yellow lg:mb-12 lg:w-24"
+        />
 
-      <div className="relative grid grid-cols-2 gap-y-12 lg:grid-cols-4 lg:divide-x lg:divide-border-dark lg:gap-y-0">
-        {stats.map((stat, index) => (
-          <AnimationWrapper key={stat.label} delay={getStaggerDelay(index) + 0.15} className="lg:px-8">
-            <StatCounter value={stat.value} label={stat.label} variant={stat.variant} />
-          </AnimationWrapper>
-        ))}
-      </div>
+        <div className="grid grid-cols-2 gap-y-12 lg:grid-cols-4 lg:divide-x lg:divide-border-dark lg:gap-y-0">
+          {stats.map((stat) => (
+            <div key={stat.label} className="lg:px-8">
+              <StatCounter value={stat.value} label={stat.label} variant={stat.variant} />
+            </div>
+          ))}
+        </div>
+      </CameraGroup>
     </PageSection>
   );
 }

@@ -6,6 +6,7 @@ import { buildOrganizationSchema } from "@/lib/structured-data";
 import { SkipLink } from "@/components/a11y";
 import { Navbar, Footer, StickyMobileCTA } from "@/components/layout";
 import { ScrollProgressBar } from "@/components/motion";
+import { MotionCameraProvider } from "@/lib/motion";
 import "./globals.css";
 
 export const metadata: Metadata = defaultMetadata;
@@ -42,18 +43,29 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         add the same inset once). Removed entirely at lg: since the bar itself
         is lg:hidden.
       */}
-      <body className="antialiased pb-[calc(76px+env(safe-area-inset-bottom))] lg:pb-0">
+      <body className="overflow-x-hidden antialiased pb-[calc(76px+env(safe-area-inset-bottom))] lg:pb-0">
         {/* Static, build-time-known JSON-LD — no user input reaches this. */}
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}
         />
-        <SkipLink />
-        <ScrollProgressBar />
-        <Navbar />
-        <main id="main-content">{children}</main>
-        <Footer />
-        <StickyMobileCTA />
+        {/*
+          MotionCameraProvider wraps all chrome and page content so every
+          section shares one scroll source, one velocity signal and one
+          intensity multiplier. It renders no DOM of its own and nothing inside
+          it re-renders on scroll — scroll position and velocity are
+          MotionValues, so `children` here stay server-rendered exactly as
+          before. Placed above Navbar/Footer, not just <main>, so persistent
+          chrome can join the same camera later without another provider.
+        */}
+        <MotionCameraProvider>
+          <SkipLink />
+          <ScrollProgressBar />
+          <Navbar />
+          <main id="main-content">{children}</main>
+          <Footer />
+          <StickyMobileCTA />
+        </MotionCameraProvider>
       </body>
     </html>
   );

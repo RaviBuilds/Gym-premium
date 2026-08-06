@@ -2,9 +2,10 @@
 
 import Image from "next/image";
 import { Fragment, useEffect, useLayoutEffect, useRef, useState } from "react";
-import { useReducedMotion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { useIsBelowDesktop } from "@/lib/use-viewport";
+import { useCameraLayer } from "@/lib/motion";
 
 /**
  * The handoff has to be set up and torn down *before* the browser paints,
@@ -215,6 +216,21 @@ export function CinematicHeroSequence({ activeIndex, onFrameChange }: CinematicH
   const motionEnabled = !prefersReducedMotion && !isBelowDesktop;
 
   /**
+   * Background parallax through the shared virtual camera (depth="background",
+   * ~0.12 lag + a 1.045→1.0 dolly). The critical fix over the previous version:
+   * `useCameraLayer`'s ref sits on a wrapper that is NEVER transformed, and the
+   * y/scale style is applied to a child. The old code put its `useScroll` target
+   * on the same motion.div it then transformed — `getBoundingClientRect` reads
+   * transforms, so the progress calculation was feeding on its own output. The
+   * system also owns the overscan bleed, so the drift can't reveal an edge.
+   */
+  const {
+    ref: backgroundRef,
+    style: backgroundStyle,
+    overscanPad,
+  } = useCameraLayer("background");
+
+  /**
    * Open the handoff *during* render, not in an effect: the incoming layer has
    * to be painted at opacity 0 before its dissolve starts, or it would flash
    * full-strength for a frame. React's documented "adjust state when a prop
@@ -398,95 +414,110 @@ export function CinematicHeroSequence({ activeIndex, onFrameChange }: CinematicH
   }
 
   return (
-    // `isolation` keeps the screened light band blending against the scenes
-    // inside this stack and nothing beyond it.
-    <div className="absolute inset-0 z-0" style={{ isolation: "isolate" }}>
-      {HERO_FRAMES.map((frame, i) => {
-        const isIncoming = transition ? i === transition.to : i === committedIndex;
-        const isOutgoing = transition
-          ? i === transition.from && transition.from !== transition.to
-          : false;
-        const isDissolving = isIncoming && transition !== null;
+    // Outer wrapper is the camera's *measured* element — never transformed, and
+    // clips the overscan bleed the background plane extends past the frame.
+    <div ref={backgroundRef} className="absolute inset-0 z-0 overflow-hidden">
+      <motion.div
+        className="absolute inset-x-0"
+        style={{
+          isolation: "isolate",
+          ...(backgroundStyle ?? {}),
+          // System-owned bleed: the plane extends above/below the frame so its
+          // drift + dolly can never expose an edge. Collapses to a flush fill
+          // when the camera is parked (reduced motion / pre-measurement).
+          top: backgroundStyle ? -overscanPad : 0,
+          bottom: backgroundStyle ? -overscanPad : 0,
+        }}
+      >
+        <div className="absolute inset-0 will-change-transform">
+        {HERO_FRAMES.map((frame, i) => {
+          const isIncoming = transition ? i === transition.to : i === committedIndex;
+          const isOutgoing = transition
+            ? i === transition.from && transition.from !== transition.to
+            : false;
+          const isDissolving = isIncoming && transition !== null;
 
-        return (
-          <div
-            key={frame.src}
-            ref={(el) => {
-              layerRefs.current[i] = el;
-            }}
-            aria-hidden={!isIncoming}
-            className="absolute inset-0"
-            style={{
-              // Handoff opacity is owned by the dissolve animation; everything
-              // else is a hard 1 or 0. No CSS transitions anywhere in the stack.
-              opacity: isDissolving ? 0 : isIncoming || isOutgoing ? 1 : 0,
-              zIndex: isDissolving ? 2 : isIncoming || isOutgoing ? 1 : 0,
-              willChange: isDissolving ? "opacity" : undefined,
-            }}
-          >
+          return (
             <div
+              key={frame.src}
               ref={(el) => {
-                cameraRefs.current[i] = el;
+                layerRefs.current[i] = el;
               }}
-              className="absolute inset-0 will-change-transform"
-              // Pre-animation resting pose. Reduced motion keeps the approved
-              // 1:1 framing; the camera otherwise opens from its own start pose.
+              aria-hidden={!isIncoming}
+              className="absolute inset-0"
               style={{
-                transform: motionEnabled ? cameraTransform(frame.camera, -1) : undefined,
+                // Handoff opacity is owned by the dissolve animation; everything
+                // else is a hard 1 or 0. No CSS transitions anywhere in the stack.
+                opacity: isDissolving ? 0 : isIncoming || isOutgoing ? 1 : 0,
+                zIndex: isDissolving ? 2 : isIncoming || isOutgoing ? 1 : 0,
+                willChange: isDissolving ? "opacity" : undefined,
               }}
             >
-              {/* All five scenes stay mounted, so the next one is decoded long
-                  before it is needed and a handoff never waits on the network. */}
-              <Image
-                src={frame.src}
-                alt={frame.alt}
-                fill
-                priority={i === 0}
-                sizes="100vw"
-                className={cn("object-cover", frame.objectPosition)}
+              <div
+                ref={(el) => {
+                  cameraRefs.current[i] = el;
+                }}
+                className="absolute inset-0 will-change-transform"
+                // Pre-animation resting pose. Reduced motion keeps the approved
+                // 1:1 framing; the camera otherwise opens from its own start pose.
+                style={{
+                  transform: motionEnabled ? cameraTransform(frame.camera, -1) : undefined,
+                }}
+              >
+                {/* All five scenes stay mounted, so the next one is decoded long
+                    before it is needed and a handoff never waits on the network. */}
+                <Image
+                  src={frame.src}
+                  alt={frame.alt}
+                  fill
+                  priority={i === 0}
+                  sizes="100vw"
+                  className={cn("object-cover", frame.objectPosition)}
+                />
+              </div>
+              <div
+                className="absolute inset-0"
+                style={{ backgroundImage: overlayGradient(frame.tint) }}
               />
             </div>
-            <div
-              className="absolute inset-0"
-              style={{ backgroundImage: overlayGradient(frame.tint) }}
-            />
-          </div>
-        );
-      })}
+          );
+        })}
 
-      {/* Lighting handoff. Mounted only while a scene is changing hands, and
-          mounted as direct children on purpose: an extra wrapper would risk
-          becoming a blending boundary and flatten the screened light into paint.
-          Both bands overflow the frame and are clipped by the Hero section. */}
-      {transition ? (
-        <Fragment key={transition.id}>
-          <div
-            ref={shadowRef}
-            aria-hidden="true"
-            className="pointer-events-none absolute inset-y-0 left-0 w-[72%] will-change-transform"
-            style={{
-              zIndex: 3,
-              opacity: 0,
-              backgroundImage: shadowBand(transition.direction),
-              maskImage: SWEEP_VERTICAL_FALLOFF,
-              WebkitMaskImage: SWEEP_VERTICAL_FALLOFF,
-            }}
-          />
-          <div
-            ref={lightRef}
-            aria-hidden="true"
-            className="pointer-events-none absolute inset-y-0 left-0 w-[72%] will-change-transform"
-            style={{
-              zIndex: 3,
-              opacity: 0,
-              mixBlendMode: "screen",
-              backgroundImage: lightBand(transition.direction),
-              maskImage: SWEEP_VERTICAL_FALLOFF,
-              WebkitMaskImage: SWEEP_VERTICAL_FALLOFF,
-            }}
-          />
-        </Fragment>
-      ) : null}
+        {/* Lighting handoff. Mounted only while a scene is changing hands, and
+            mounted as direct children on purpose: an extra wrapper would risk
+            becoming a blending boundary and flatten the screened light into paint.
+            Both bands overflow the frame and are clipped by the Hero section. */}
+        {transition ? (
+          <Fragment key={transition.id}>
+            <div
+              ref={shadowRef}
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-y-0 left-0 w-[72%] will-change-transform"
+              style={{
+                zIndex: 3,
+                opacity: 0,
+                backgroundImage: shadowBand(transition.direction),
+                maskImage: SWEEP_VERTICAL_FALLOFF,
+                WebkitMaskImage: SWEEP_VERTICAL_FALLOFF,
+              }}
+            />
+            <div
+              ref={lightRef}
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-y-0 left-0 w-[72%] will-change-transform"
+              style={{
+                zIndex: 3,
+                opacity: 0,
+                mixBlendMode: "screen",
+                backgroundImage: lightBand(transition.direction),
+                maskImage: SWEEP_VERTICAL_FALLOFF,
+                WebkitMaskImage: SWEEP_VERTICAL_FALLOFF,
+              }}
+            />
+          </Fragment>
+        ) : null}
+        </div>
+      </motion.div>
     </div>
   );
 }

@@ -10,6 +10,12 @@ export type { AnimationWrapperProps, RevealVariant } from "./AnimationWrapper";
 
 export { ParallaxLayer } from "./ParallaxLayer";
 
+// The camera system's wrapper form. New section motion should use this rather
+// than ParallaxLayer — see src/lib/motion/camera-tokens.ts for why the depth
+// vocabulary replaced the old drift-per-section presets.
+export { CameraLayer, CameraGroup } from "./CameraLayer";
+export type { CameraLayerProps } from "./CameraLayer";
+
 export { AnimatedDivider } from "./AnimatedDivider";
 export type { AnimatedDividerProps } from "./AnimatedDivider";
 

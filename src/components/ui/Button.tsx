@@ -34,13 +34,16 @@ const sizeStyles: Record<ButtonSize, string> = {
 };
 
 const variantStyles: Record<ButtonVariant, string> = {
+  // Exit-easing asymmetry: hover-in at 300ms, hover-out at 400ms so the
+  // button settles back slower than it rose — reads as having inertia
+  // rather than snapping. Transform + shadow only (GPU-accelerated).
   primary:
-    "transform-gpu bg-brand-yellow text-ink shadow-button transition-all duration-300 ease-out hover:bg-white hover:text-brand-yellow hover:shadow-glow-yellow hover:-translate-y-0.5",
+    "transform-gpu bg-brand-yellow text-ink shadow-button transition-[background-color,color,box-shadow,transform] duration-400 ease-out hover:bg-white hover:text-brand-yellow hover:shadow-glow-yellow hover:-translate-y-1 hover:duration-300",
   secondary:
-    "bg-transparent border-2 border-current text-current transition-colors duration-300 ease-out hover:border-brand-yellow hover:text-brand-yellow hover:bg-white/5",
+    "bg-transparent border-2 border-current text-current transition-[color,border-color,background-color] duration-400 ease-out hover:border-brand-yellow hover:text-brand-yellow hover:bg-white/5 hover:duration-300",
   ghost:
-    "bg-transparent text-text-secondary underline-offset-4 hover:underline hover:text-text-primary p-0 min-h-0",
-  whatsapp: "bg-whatsapp text-white hover:bg-whatsapp/90",
+    "bg-transparent text-text-secondary p-0 min-h-0 transition-[color,background-size] duration-300 ease-out hover:text-text-primary hover:duration-200 bg-linear-to-r from-ink to-ink bg-[length:0%_1px] bg-left-bottom bg-no-repeat hover:bg-[length:100%_1px] focus-visible:bg-[length:100%_1px]",
+  whatsapp: "bg-whatsapp text-white transition-colors duration-400 ease-out hover:bg-whatsapp/90 hover:duration-300",
 };
 
 interface SharedProps {
@@ -78,10 +81,13 @@ export type ButtonLinkProps = SharedProps &
     href: string;
   };
 
-/** Press-state scale feedback — §9/§11: scale(0.97) on press, back to 1 on release. */
+/** Press-state scale feedback — §1 Motion Vocabulary: scale(0.97) on press
+ *  at 180ms (motion.duration.fast) with easeOut, back to 1 on release.
+ *  `as const` narrows the easing array to the tuple type Framer Motion's
+ *  `Transition` expects (`[number, number, number, number]`), not `number[]`. */
 const pressAnimation = {
   whileTap: { scale: 0.97 },
-  transition: { duration: 0.1 },
+  transition: { duration: 0.18, ease: [0.16, 1, 0.3, 1] as const },
 };
 
 /**

@@ -57,6 +57,11 @@ export const colors = {
  * §10 Motion Design — canonical durations/easings so every animated
  * component (AnimationWrapper, CountUp, ParallaxLayer, button press states)
  * pulls from one shared timing vocabulary instead of inventing its own.
+ *
+ * NOTE: The motion system has been extended with a comprehensive preset
+ * architecture in src/lib/motion-presets.ts. These legacy values are
+ * maintained for backward compatibility with existing components.
+ * New implementations should use the motion presets system.
  */
 export const motion = {
   duration: {

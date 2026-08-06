@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { motion, useScroll, useTransform, useReducedMotion, useMotionValue, MotionValue } from "framer-motion";
 import { motion as motionTokens } from "@/lib/design-tokens";
+import { parallaxPresets, type ParallaxPreset } from "@/lib/motion-presets";
 
 /**
  * ParallaxLayer — §10 Motion Design, §Component-Architecture.md "ParallaxLayer".
@@ -12,6 +13,9 @@ import { motion as motionTokens } from "@/lib/design-tokens";
  * MediaBackground. Isolated from AnimationWrapper because parallax is a
  * continuous, scroll-position-linked transform (the only genuinely
  * continuous animation in the system) rather than a one-time trigger.
+ *
+ * UPDATED: Now supports preset-based configuration via the motion presets
+ * system. Maintains backward compatibility with existing usage.
  *
  * §10: "should move no more than 40px of total travel across the entire
  * scrollable hero height — subtle enough to add depth, not enough to feel
@@ -33,12 +37,18 @@ export function ParallaxLayer({
   children,
   className,
   disableOnMobile = true,
+  preset,
+  maxDrift,
   mouseX,
   mouseY,
 }: {
   children: ReactNode;
   className?: string;
   disableOnMobile?: boolean;
+  /** NEW: Parallax speed preset (alternative to maxDrift) */
+  preset?: ParallaxPreset;
+  /** Custom max drift in pixels. Overrides preset if provided. */
+  maxDrift?: number;
   mouseX?: MotionValue<number>;
   mouseY?: MotionValue<number>;
 }) {
@@ -63,7 +73,12 @@ export function ParallaxLayer({
   const fallbackMouseX = useMotionValue(0);
   const fallbackMouseY = useMotionValue(0);
 
-  const scrollYTransform = useTransform(scrollYProgress, [0, 1], [0, motionTokens.distance.parallaxMax]);
+  // Determine max drift: custom value > preset > legacy default
+  const effectiveMaxDrift = 
+    maxDrift ?? 
+    (preset ? parallaxPresets[preset].maxDrift : motionTokens.distance.parallaxMax);
+
+  const scrollYTransform = useTransform(scrollYProgress, [0, 1], [0, effectiveMaxDrift]);
   const mouseXShift = useTransform(mouseX ?? fallbackMouseX, [-500, 500], [-8, 8]);
   const mouseYShift = useTransform(mouseY ?? fallbackMouseY, [-500, 500], [-8, 8]);
 

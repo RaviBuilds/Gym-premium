@@ -115,7 +115,10 @@ export function SceneNavigator({
             aria-current={isActive}
             onClick={() => onSelect(i)}
             className={cn(
-              "relative h-14 w-14 shrink-0 cursor-pointer transition-all duration-300 ease-out wide:h-16 wide:w-16",
+              // Exit-easing asymmetry: hover-in at 300ms, settle-back at
+              // 400ms. active:scale-[0.97] is the transform-only press
+              // affordance (no bounce/wobble).
+              "relative h-14 w-14 shrink-0 cursor-pointer transition-[transform,filter,opacity] duration-400 ease-out hover:duration-300 active:scale-[0.97] wide:h-16 wide:w-16",
               "hover:-translate-y-1 hover:scale-105 hover:brightness-110 hover:contrast-110",
               "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-yellow",
               isActive ? "z-10 scale-110" : "opacity-80"

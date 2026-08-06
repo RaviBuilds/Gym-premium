@@ -39,7 +39,7 @@ export function StickyMobileCTA() {
       <div className="grid grid-cols-3 divide-x divide-border-dark">
         <a
           href={phoneHref}
-          className="flex flex-col items-center gap-1 py-3 text-white active:scale-[0.97]"
+          className="flex flex-col items-center gap-1 py-3 text-white transition-transform duration-150 ease-out active:scale-[0.97]"
         >
           <Icon icon={Phone} size="lg" />
           <span className="font-body text-caption font-semibold">Call</span>
@@ -48,14 +48,14 @@ export function StickyMobileCTA() {
           href={siteConfig.links.whatsapp}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex flex-col items-center gap-1 py-3 text-whatsapp active:scale-[0.97]"
+          className="flex flex-col items-center gap-1 py-3 text-whatsapp transition-transform duration-150 ease-out active:scale-[0.97]"
         >
           <Icon icon={MessageCircle} size="lg" />
           <span className="font-body text-caption font-semibold">WhatsApp</span>
         </a>
         <Link
           href="/#free-trial"
-          className="flex flex-col items-center gap-1 bg-brand-yellow py-3 text-ink active:scale-[0.97]"
+          className="flex flex-col items-center gap-1 bg-brand-yellow py-3 text-ink transition-transform duration-150 ease-out active:scale-[0.97]"
         >
           <Icon icon={Dumbbell} size="lg" />
           <span className="font-body text-caption font-semibold">Free Trial</span>
