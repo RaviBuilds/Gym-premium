@@ -68,23 +68,57 @@ const PREMIUM_ITEM = {
  * Material backdrop tuning — the card's resting dark veil that dims the
  * shared pattern plane behind the Programs card rows (see Programs.tsx's
  * `ProgramMaterialPlane`). Kept as named constants, never inline literals,
- * so the "barely there at rest, glows on hover" balance is one documented
- * decision.
+ * so the "physical elevation, not a lighting effect" balance is one
+ * documented decision.
  *
  *  - Rest veil `bg-ink/40`: 40% Ink over the pattern at rest, so the pattern
  *    reads only faintly through it. The alpha is carried on the color
  *    (`/40`) — not element opacity — so the element's own `opacity` stays
  *    free for the hover fade below.
  *  - On `lg:group-hover` (desktop pointer) and `group-active` (touch tap)
- *    the whole veil fades to `opacity-0`, uncovering the bright pattern in
- *    the ring the veil extends into around the card — the backlight effect.
- *  - `-inset-4` + `blur-2xl` spread the veil past the card edges so the
- *    reveal reads as a soft halo around the card, not a hard rectangle.
+ *    the veil eases to `opacity-50` (half its resting density) rather than
+ *    fully vanishing — the material becomes marginally easier to perceive,
+ *    it does not suddenly brighten or uncover. Deliberately no `blur` and a
+ *    tight `-inset-1` (not a multi-pixel spread): a blurred, wide veil
+ *    fading to fully transparent reads as a halo/spotlight switching on;
+ *    a tight, unblurred veil that only partially fades reads as the card's
+ *    own shadow softening as it lifts — physical depth, not a lighting cue.
  */
 const MATERIAL_BACKDROP_CLASS =
-  "pointer-events-none absolute -inset-4 z-0 rounded-card bg-ink/40 blur-2xl " +
+  "pointer-events-none absolute -inset-1 z-0 rounded-card bg-ink/40 " +
   "motion-safe:transition-opacity motion-safe:duration-500 ease-out " +
-  "lg:group-hover:opacity-0 group-active:opacity-0";
+  "lg:group-hover:opacity-50 group-active:opacity-50";
+
+/**
+ * Elevation shadow — a dark-backdrop-visible cast shadow for the card,
+ * additive to Card's own base box-shadow rather than a replacement for it.
+ * Card.tsx's rest/hover shadow (`rgba(20,24,29,0.12)` → `rgba(20,24,29,0.08)`)
+ * is correct on the light `surface-light` background every other card type
+ * (TrainerCard/LocationCard/TestimonialCard) sits on, but on the Programs
+ * section's charcoal-to-near-black gradient the shadow color is nearly
+ * identical to the backdrop it's cast on, so it reads as invisible — not a
+ * wrong *direction*, just the wrong *density* for this one dark section.
+ * Rather than overriding Card.tsx's shared shadow (which would regress the
+ * other card types), this is a separate sibling layer scoped to ProgramCard
+ * only, sized to the exact same `rounded-card` footprint as the Card panel
+ * so the shadow reads as cast BY the card, not as a lighting effect.
+ *
+ * Direction mirrors Card's own hover contract exactly — larger blur radius
+ * (softer) + lower alpha (lighter) on hover/touch-active — the same
+ * "further from the surface, less dense" relationship Card.tsx already
+ * encodes, just at a density that's actually perceptible against this
+ * section's near-black gradient. A single uniform box-shadow matching the
+ * card's own silhouette: no filter, no backdrop-filter, no radial shape, no
+ * pointer-tracking — the material plane behind it (Programs.tsx's
+ * `ProgramMaterialPlane`) never moves or brightens; only this shadow's own
+ * blur/alpha eases on interaction.
+ */
+const ELEVATION_SHADOW_CLASS =
+  "pointer-events-none absolute inset-0 z-0 rounded-card " +
+  "shadow-[0_10px_28px_rgb(0_0_0_/_0.45)] " +
+  "motion-safe:transition-shadow motion-safe:duration-500 ease-out " +
+  "lg:group-hover:shadow-[0_18px_40px_rgb(0_0_0_/_0.3)] " +
+  "group-active:shadow-[0_18px_40px_rgb(0_0_0_/_0.3)]";
 
 /** Breathing loop — near-invisible ambient scale on the image layer only.
  *  Not `as const` on the whole object — Framer Motion requires mutable
@@ -174,21 +208,39 @@ export function ProgramCard({
             })}
       >
         {/* Material backdrop — the card's resting "shadow": a soft dark
-            veil (MATERIAL_BACKDROP_REST_OPACITY) that dims the premium
-            pattern plane behind the Programs card row so it reads only
-            faintly at rest. On desktop hover (and touch active) this card's
-            veil fades to 0, uncovering the bright pattern in the ring around
-            the card — a backlight/"light behind the card" effect. Purely a
-            veil over the shared plane; the plane itself never moves. Under
-            reduced motion the fade is instant (motion-safe: gate), the final
-            state is still reachable, so no content depends on animation. */}
+            veil that dims the premium pattern plane behind the Programs
+            card row so it reads only faintly at rest. On desktop hover
+            (and touch active) this card's veil eases to half its resting
+            density — the material becomes marginally easier to perceive,
+            it does not uncover or brighten. Purely a veil over the shared
+            plane; the plane itself never moves. Under reduced motion the
+            fade is instant (motion-safe: gate), the final state is still
+            reachable, so no content depends on animation. */}
         <div aria-hidden="true" className={MATERIAL_BACKDROP_CLASS} />
+
+        {/* Elevation shadow — see ELEVATION_SHADOW_CLASS doc comment. Sits
+            between the material veil and the card panel, sized to match the
+            card's own footprint exactly, so it reads as the card's cast
+            shadow deepening/softening as it lifts — not as a background
+            effect. Card.tsx's own box-shadow is unchanged (still correct
+            for TrainerCard/LocationCard on light sections); this is an
+            additive, ProgramCard-only layer for this section's dark
+            backdrop. */}
+        <div aria-hidden="true" className={ELEVATION_SHADOW_CLASS} />
 
         <Card
           className={cn(
             "relative z-10 flex h-full flex-col",
             featured
-              ? "motion-safe:animate-[card-glow_3s_ease-in-out_infinite] shadow-[0_0_0_1px_rgb(255_222_1_/_0.45),0_0_24px_rgb(255_222_1_/_0.18)]"
+              ? // Flagship distinction: a static 2px yellow border only — no
+                // blur, no animation. The previous treatment (infinite
+                // breathing box-shadow glow) read as a spotlight/halo effect,
+                // which conflicts with this section's "physical elevation,
+                // not lighting" material language. `border` (not a
+                // box-shadow utility) deliberately avoids competing with
+                // Card's own inline `boxShadow` style, which would otherwise
+                // silently win over a same-property Tailwind class.
+                "border-2 border-brand-yellow/60"
               : "border border-border-subtle/60"
           )}
         >

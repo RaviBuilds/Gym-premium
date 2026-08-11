@@ -18,53 +18,50 @@ import { programs } from "@/content/programs";
  */
 
 /**
- * Program card material plane — a SINGLE full-bleed backdrop for the entire
- * card zone (not confined to any card or Container). Sourced from the
- * already-approved `luxury-grid-pattern.webp`. It spans the full viewport
- * width and runs from the bottom edge of the environment image down to the
- * end of the section, so the luxury grid pattern — not flat dark — is what
- * shows behind and between the cards, in every otherwise-black background
- * area. A vertical mask fades the pattern IN from exactly where the
- * environment image ends (top) and back OUT just before the next section
- * (bottom), so there is never a hard edge. Fully static — no parallax, no
- * animation.
+ * Program card material plane — a quiet under-card texture, scoped
+ * INDEPENDENTLY to each card row rather than one continuous backdrop
+ * spanning the whole card zone. Train With Purpose sits between the two
+ * rows, so each row gets its own plane instance; the banner's own opaque
+ * image/overlay sits between them untouched, and neither plane extends up
+ * into the environment image/heading above row 1 or down past row 2.
  *
- * Rendered as a CSS `background-image` rather than `next/image`, because the
- * pattern must TILE: `PATTERN_SIZE` ("100% auto") scales it to the full
- * viewport width at its natural aspect ratio — never stretched — and
- * `PATTERN_REPEAT` ("repeat-y") stacks copies downward so the backdrop stays
- * continuous however tall the card zone gets. `next/image` with `fill` can
- * only cover/contain a single instance, so it cannot express a tiled plane.
+ * Sourced from the already-approved `luxury-grid-pattern.webp`. Rendered as
+ * a CSS `background-image` rather than `next/image`, because the pattern
+ * must TILE: `PATTERN_SIZE` ("100% auto") scales it to the row's full width
+ * at its natural aspect ratio — never stretched — and `PATTERN_REPEAT`
+ * ("repeat-y") stacks copies downward so the plane stays continuous however
+ * tall that row's wrapper gets. A vertical mask fades the pattern in/out at
+ * the row wrapper's own top/bottom edge, so there is never a hard edge, a
+ * visible rectangle, or an obvious image boundary. Fully static — no
+ * parallax, no animation, no scroll listener.
  *
- * Named constants (not inline literals) keep the tuning as one documented
- * decision:
- *  - PATTERN_SIZE     — swap the "auto" for a px/% value to scale the tile.
- *  - PATTERN_REPEAT   — "repeat-y" (vertical tiling) / "repeat" / "no-repeat".
- *  - PATTERN_OPACITY  — how present the pattern reads.
- *  - PATTERN_FADE_MASK — transparency mask (not a dark overlay) so the plane
- *    dissolves into the section background at top and bottom.
+ * Deliberately near-invisible: `PATTERN_OPACITY` targets ~6-8% visibility —
+ * the goal is "the cards feel expensive", not "there is a background
+ * pattern". If the texture ever reads as an obvious pattern rather than a
+ * quiet material, lower this constant first before changing anything else.
  *
- * Layering: `z-0` sits above the section's own dark gradient background but
- * below the card rows (`z-10`). Each `ProgramCard`'s own dark veil (its
- * resting "shadow", see ProgramCard's MATERIAL_BACKDROP_CLASS) still sits
- * above this plane and fades on hover to let the pattern shine through as a
- * backlight around that card.
- *
- * The top offsets (280/320/380px) match the environment image's responsive
- * heights above, so the pattern begins exactly where that image ends.
+ * Positioning: `absolute inset-0` inside each row's own `relative` wrapper
+ * (see call sites below), at `z-0`. That wrapper's actual content
+ * (Container/CardGrid) is itself wrapped in a `relative z-10` div so the
+ * cards and any row copy always paint above this plane. `overflow-hidden`
+ * on the plane plus its `inset-0` sizing (never wider than its row wrapper)
+ * guarantees no horizontal overflow and no visible left/right image edge at
+ * any breakpoint. Each `ProgramCard`'s own dark veil (its resting "shadow",
+ * see ProgramCard's MATERIAL_BACKDROP_CLASS) still sits above this plane and
+ * fades on hover to let the pattern shine through faintly around that card.
  */
 const PATTERN_URL = "url('/images/sections/programs/luxury-grid-pattern.webp')";
 const PATTERN_SIZE = "100% auto"; // full width, natural aspect ratio — no stretch
-const PATTERN_REPEAT = "repeat-y"; // tile downward for a continuous backdrop
-const PATTERN_OPACITY = 0.9;
+const PATTERN_REPEAT = "repeat-y"; // tile downward for a continuous backdrop within the row
+const PATTERN_OPACITY = 0.07; // ~7% visibility — material, not wallpaper
 const PATTERN_FADE_MASK =
-  "linear-gradient(to bottom, transparent 0px, #000 160px, #000 calc(100% - 80px), transparent 100%)";
+  "linear-gradient(to bottom, transparent 0px, #000 56px, #000 calc(100% - 56px), transparent 100%)";
 
 function ProgramMaterialPlane() {
   return (
     <div
       aria-hidden="true"
-      className="pointer-events-none absolute inset-x-0 bottom-0 top-[280px] z-0 overflow-hidden sm:top-[320px] lg:top-[380px]"
+      className="pointer-events-none absolute inset-0 z-0 overflow-hidden"
       style={{
         backgroundImage: PATTERN_URL,
         backgroundSize: PATTERN_SIZE,
@@ -214,50 +211,57 @@ export function Programs() {
         }}
       />
 
-      {/* Full-bleed luxury pattern backdrop for the whole card zone — spans
-          the viewport width and fades in from where the environment image
-          ends, so the pattern (not flat dark) fills the background behind
-          and between every card row. */}
-      <ProgramMaterialPlane />
+      {/* Row 1 material plane — scoped to this row's own wrapper only (not
+          the heading/environment image above, not Train With Purpose
+          below). Positioned first so it sits behind the row's z-10 content
+          within this same relative wrapper. */}
+      <div className="relative pt-10">
+        <ProgramMaterialPlane />
+        <div className="relative z-10">
+          <Container>
+            <div className="flex flex-col gap-10">
+              <p className="-mt-4 flex items-center gap-2 font-body text-caption font-semibold uppercase tracking-wide text-text-secondary-dark sm:hidden">
+                Swipe to explore all 9 programs
+                <Icon icon={ArrowRight} size="sm" aria-hidden />
+              </p>
+              <CardGrid columns={3} reveal="premium" className="relative z-10">
+                {firstRow.map((program, index) => (
+                  <ProgramCard
+                    key={program.slug}
+                    program={program}
+                    index={index}
+                    featured={program.slug === "crossfit"}
+                    motion="premium"
+                  />
+                ))}
+              </CardGrid>
+            </div>
+          </Container>
+        </div>
+      </div>
 
-      <div className="relative z-10 pt-10">
-        <Container>
-          <div className="flex flex-col gap-10">
-            <p className="-mt-4 flex items-center gap-2 font-body text-caption font-semibold uppercase tracking-wide text-text-secondary-dark sm:hidden">
-              Swipe to explore all 9 programs
-              <Icon icon={ArrowRight} size="sm" aria-hidden />
-            </p>
+      <TrainingBanner />
+
+      {/* Row 2 material plane — its own independent instance, scoped to this
+          row's own wrapper only. Train With Purpose's banner sits between
+          this and row 1 above and is untouched by either plane. */}
+      <div className="relative">
+        <ProgramMaterialPlane />
+        <div className="relative z-10">
+          <Container>
             <CardGrid columns={3} reveal="premium" className="relative z-10">
-              {firstRow.map((program, index) => (
+              {secondRow.map((program, index) => (
                 <ProgramCard
                   key={program.slug}
                   program={program}
-                  index={index}
+                  index={index + firstRow.length}
                   featured={program.slug === "crossfit"}
                   motion="premium"
                 />
               ))}
             </CardGrid>
-          </div>
-        </Container>
-      </div>
-
-      <TrainingBanner />
-
-      <div className="relative z-10">
-        <Container>
-          <CardGrid columns={3} reveal="premium" className="relative z-10">
-            {secondRow.map((program, index) => (
-              <ProgramCard
-                key={program.slug}
-                program={program}
-                index={index + firstRow.length}
-                featured={program.slug === "crossfit"}
-                motion="premium"
-              />
-            ))}
-          </CardGrid>
-        </Container>
+          </Container>
+        </div>
       </div>
     </div>
   );
@@ -273,7 +277,9 @@ export function Programs() {
  * Container, so the banner needs to escape that Container's max-width/
  * padding to read as full-bleed) without needing bleed="content" on the
  * whole section, which would also strip the Container from the card grids
- * above/below it.
+ * above/below it. Short static top/bottom seam blends (see below) soften
+ * the hand-off to/from the card rows so the banner reads as an intentional
+ * transition rather than a hard-edged cut.
  */
 function TrainingBanner() {
   return (
@@ -298,12 +304,51 @@ function TrainingBanner() {
       </ParallaxLayer>
 
       <div aria-hidden="true" className="absolute inset-0 bg-ink/55" />
+      {/* Cinematic vignette — tuned so the copy block (vertically AND
+          horizontally centered, see the closing content wrapper below)
+          sits on guaranteed contrast rather than the gradient's brightest
+          point. Previously fully transparent at center (a "hole" right
+          behind the headline) with density only building toward the
+          edges — technically a vignette, but backwards for legibility
+          since the text lives exactly where the gradient was doing the
+          least work. Now holds a moderate density at center (0.32,
+          matching the same Ink token used everywhere else in this
+          section) that eases slightly at the mid-radius before deepening
+          toward the edges as before — still reads as a lens vignette
+          framing the shot, just no longer undermines its own text-safety
+          job. Values stay moderate throughout (max 0.75, same as the
+          original edge value) so the photo never goes muddy/flat. */}
       <div
         aria-hidden="true"
         className="absolute inset-0"
         style={{
           background:
-            "radial-gradient(ellipse at center, transparent 35%, rgba(20,24,29,0.35) 75%, rgba(20,24,29,0.7) 100%)",
+            "radial-gradient(ellipse at center, rgba(20,24,29,0.32) 0%, rgba(20,24,29,0.22) 45%, rgba(20,24,29,0.5) 78%, rgba(20,24,29,0.75) 100%)",
+        }}
+      />
+
+      {/* Top seam blend — softens the hard cut where this full-bleed banner
+          begins immediately below row 1's card zone above. Same technique
+          as this file's environment-image "top fade"/"emergence gradient":
+          a short, static Ink gradient, no animation, no parallax. */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-x-0 top-0 h-10 sm:h-12 lg:h-16"
+        style={{
+          background:
+            "linear-gradient(180deg, rgba(20,24,29,0.55) 0%, transparent 100%)",
+        }}
+      />
+
+      {/* Bottom seam blend — mirrors the top blend so the banner's lower
+          edge dissolves into row 2's card zone below instead of cutting
+          off sharply. */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-x-0 bottom-0 h-10 sm:h-12 lg:h-16"
+        style={{
+          background:
+            "linear-gradient(180deg, transparent 0%, rgba(20,24,29,0.55) 100%)",
         }}
       />
 
@@ -312,7 +357,7 @@ function TrainingBanner() {
           <Eyebrow tone="dark">Train With Purpose</Eyebrow>
         </AnimationWrapper>
         <AnimationWrapper variant="fade-up" delay={0.1}>
-          <Heading level="section" as="p" className="text-white">
+          <Heading level="section" as="h3" className="text-white">
             Real Coaching.
             <br />
             Real Results.
