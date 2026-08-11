@@ -64,6 +64,28 @@ const PREMIUM_ITEM = {
   },
 } as const;
 
+/**
+ * Material backdrop tuning — the card's resting dark veil that dims the
+ * shared pattern plane behind the Programs card rows (see Programs.tsx's
+ * `ProgramMaterialPlane`). Kept as named constants, never inline literals,
+ * so the "barely there at rest, glows on hover" balance is one documented
+ * decision.
+ *
+ *  - Rest veil `bg-ink/40`: 40% Ink over the pattern at rest, so the pattern
+ *    reads only faintly through it. The alpha is carried on the color
+ *    (`/40`) — not element opacity — so the element's own `opacity` stays
+ *    free for the hover fade below.
+ *  - On `lg:group-hover` (desktop pointer) and `group-active` (touch tap)
+ *    the whole veil fades to `opacity-0`, uncovering the bright pattern in
+ *    the ring the veil extends into around the card — the backlight effect.
+ *  - `-inset-4` + `blur-2xl` spread the veil past the card edges so the
+ *    reveal reads as a soft halo around the card, not a hard rectangle.
+ */
+const MATERIAL_BACKDROP_CLASS =
+  "pointer-events-none absolute -inset-4 z-0 rounded-card bg-ink/40 blur-2xl " +
+  "motion-safe:transition-opacity motion-safe:duration-500 ease-out " +
+  "lg:group-hover:opacity-0 group-active:opacity-0";
+
 /** Breathing loop — near-invisible ambient scale on the image layer only.
  *  Not `as const` on the whole object — Framer Motion requires mutable
  *  (non-readonly) keyframe arrays for `scale` and `times`. `as const` is
@@ -131,7 +153,7 @@ export function ProgramCard({
       className="group block h-full rounded-card transition-opacity duration-200 ease-out active:opacity-90"
     >
       <motion.div
-        className="h-full"
+        className="relative isolate h-full"
         {...(premium
           ? {
               // Premium: the outer wrapper owns the scroll-reveal only. The
@@ -151,9 +173,20 @@ export function ProgramCard({
               transition: { duration: 0.22, ease: [0.16, 1, 0.3, 1] },
             })}
       >
+        {/* Material backdrop — the card's resting "shadow": a soft dark
+            veil (MATERIAL_BACKDROP_REST_OPACITY) that dims the premium
+            pattern plane behind the Programs card row so it reads only
+            faintly at rest. On desktop hover (and touch active) this card's
+            veil fades to 0, uncovering the bright pattern in the ring around
+            the card — a backlight/"light behind the card" effect. Purely a
+            veil over the shared plane; the plane itself never moves. Under
+            reduced motion the fade is instant (motion-safe: gate), the final
+            state is still reachable, so no content depends on animation. */}
+        <div aria-hidden="true" className={MATERIAL_BACKDROP_CLASS} />
+
         <Card
           className={cn(
-            "flex h-full flex-col",
+            "relative z-10 flex h-full flex-col",
             featured
               ? "motion-safe:animate-[card-glow_3s_ease-in-out_infinite] shadow-[0_0_0_1px_rgb(255_222_1_/_0.45),0_0_24px_rgb(255_222_1_/_0.18)]"
               : "border border-border-subtle/60"

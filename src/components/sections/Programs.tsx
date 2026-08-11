@@ -1,6 +1,7 @@
 import Image from "next/image";
 import { ArrowRight } from "lucide-react";
 import { CardGrid, Icon, ProgramCard, Eyebrow, Heading, BodyText, ButtonLink } from "@/components/ui";
+import { Container } from "@/components/layout";
 import { AnimationWrapper, KineticHeadline, ParallaxLayer, MagneticButton } from "@/components/motion";
 import { programs } from "@/content/programs";
 
@@ -15,6 +16,68 @@ import { programs } from "@/content/programs";
  * so it never ends abruptly. Static — no parallax; the TrainingBanner
  * below is this section's one Tier-2 depth cue.
  */
+
+/**
+ * Program card material plane — a SINGLE full-bleed backdrop for the entire
+ * card zone (not confined to any card or Container). Sourced from the
+ * already-approved `luxury-grid-pattern.webp`. It spans the full viewport
+ * width and runs from the bottom edge of the environment image down to the
+ * end of the section, so the luxury grid pattern — not flat dark — is what
+ * shows behind and between the cards, in every otherwise-black background
+ * area. A vertical mask fades the pattern IN from exactly where the
+ * environment image ends (top) and back OUT just before the next section
+ * (bottom), so there is never a hard edge. Fully static — no parallax, no
+ * animation.
+ *
+ * Rendered as a CSS `background-image` rather than `next/image`, because the
+ * pattern must TILE: `PATTERN_SIZE` ("100% auto") scales it to the full
+ * viewport width at its natural aspect ratio — never stretched — and
+ * `PATTERN_REPEAT` ("repeat-y") stacks copies downward so the backdrop stays
+ * continuous however tall the card zone gets. `next/image` with `fill` can
+ * only cover/contain a single instance, so it cannot express a tiled plane.
+ *
+ * Named constants (not inline literals) keep the tuning as one documented
+ * decision:
+ *  - PATTERN_SIZE     — swap the "auto" for a px/% value to scale the tile.
+ *  - PATTERN_REPEAT   — "repeat-y" (vertical tiling) / "repeat" / "no-repeat".
+ *  - PATTERN_OPACITY  — how present the pattern reads.
+ *  - PATTERN_FADE_MASK — transparency mask (not a dark overlay) so the plane
+ *    dissolves into the section background at top and bottom.
+ *
+ * Layering: `z-0` sits above the section's own dark gradient background but
+ * below the card rows (`z-10`). Each `ProgramCard`'s own dark veil (its
+ * resting "shadow", see ProgramCard's MATERIAL_BACKDROP_CLASS) still sits
+ * above this plane and fades on hover to let the pattern shine through as a
+ * backlight around that card.
+ *
+ * The top offsets (280/320/380px) match the environment image's responsive
+ * heights above, so the pattern begins exactly where that image ends.
+ */
+const PATTERN_URL = "url('/images/sections/programs/luxury-grid-pattern.webp')";
+const PATTERN_SIZE = "100% auto"; // full width, natural aspect ratio — no stretch
+const PATTERN_REPEAT = "repeat-y"; // tile downward for a continuous backdrop
+const PATTERN_OPACITY = 0.9;
+const PATTERN_FADE_MASK =
+  "linear-gradient(to bottom, transparent 0px, #000 160px, #000 calc(100% - 80px), transparent 100%)";
+
+function ProgramMaterialPlane() {
+  return (
+    <div
+      aria-hidden="true"
+      className="pointer-events-none absolute inset-x-0 bottom-0 top-[280px] z-0 overflow-hidden sm:top-[320px] lg:top-[380px]"
+      style={{
+        backgroundImage: PATTERN_URL,
+        backgroundSize: PATTERN_SIZE,
+        backgroundRepeat: PATTERN_REPEAT,
+        backgroundPosition: "top center",
+        opacity: PATTERN_OPACITY,
+        WebkitMaskImage: PATTERN_FADE_MASK,
+        maskImage: PATTERN_FADE_MASK,
+      }}
+    />
+  );
+}
+
 export function Programs() {
   const firstRow = programs.slice(0, 3);
   const secondRow = programs.slice(3);
@@ -151,38 +214,50 @@ export function Programs() {
         }}
       />
 
-      <div className="relative z-10 flex flex-col gap-10 pt-10">
-        <p className="-mt-4 flex items-center gap-2 font-body text-caption font-semibold uppercase tracking-wide text-text-secondary-dark sm:hidden">
-          Swipe to explore all 9 programs
-          <Icon icon={ArrowRight} size="sm" aria-hidden />
-        </p>
-        <CardGrid columns={3} reveal="premium">
-          {firstRow.map((program, index) => (
-            <ProgramCard
-              key={program.slug}
-              program={program}
-              index={index}
-              featured={program.slug === "crossfit"}
-              motion="premium"
-            />
-          ))}
-        </CardGrid>
+      {/* Full-bleed luxury pattern backdrop for the whole card zone — spans
+          the viewport width and fades in from where the environment image
+          ends, so the pattern (not flat dark) fills the background behind
+          and between every card row. */}
+      <ProgramMaterialPlane />
+
+      <div className="relative z-10 pt-10">
+        <Container>
+          <div className="flex flex-col gap-10">
+            <p className="-mt-4 flex items-center gap-2 font-body text-caption font-semibold uppercase tracking-wide text-text-secondary-dark sm:hidden">
+              Swipe to explore all 9 programs
+              <Icon icon={ArrowRight} size="sm" aria-hidden />
+            </p>
+            <CardGrid columns={3} reveal="premium" className="relative z-10">
+              {firstRow.map((program, index) => (
+                <ProgramCard
+                  key={program.slug}
+                  program={program}
+                  index={index}
+                  featured={program.slug === "crossfit"}
+                  motion="premium"
+                />
+              ))}
+            </CardGrid>
+          </div>
+        </Container>
       </div>
 
       <TrainingBanner />
 
-      <div className="relative z-10 flex flex-col gap-10">
-        <CardGrid columns={3} reveal="premium">
-          {secondRow.map((program, index) => (
-            <ProgramCard
-              key={program.slug}
-              program={program}
-              index={index + firstRow.length}
-              featured={program.slug === "crossfit"}
-              motion="premium"
-            />
-          ))}
-        </CardGrid>
+      <div className="relative z-10">
+        <Container>
+          <CardGrid columns={3} reveal="premium" className="relative z-10">
+            {secondRow.map((program, index) => (
+              <ProgramCard
+                key={program.slug}
+                program={program}
+                index={index + firstRow.length}
+                featured={program.slug === "crossfit"}
+                motion="premium"
+              />
+            ))}
+          </CardGrid>
+        </Container>
       </div>
     </div>
   );
