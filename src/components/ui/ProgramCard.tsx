@@ -85,14 +85,21 @@ const PREMIUM_ITEM = {
  *    veil a soft elliptical falloff instead, so what dissolves has no
  *    perceivable boundary: dense across the card's own footprint, thinning
  *    through ~78%, fully transparent at the outer edge.
- *  - Because the falloff is soft, adjacent veils can now safely overlap —
- *    two gradients blending produces a gradual gradient, not the hard seam
- *    that overlapping flat rectangles produced. That's what allows a much
- *    larger `lg:-inset-10` (40px) reveal band than the old hard-edged
- *    `-inset-1` (4px), which was too small to perceive. Mobile stays at
- *    `-inset-2` (8px) deliberately: the veil is absolutely positioned inside
- *    `CardGrid`'s `overflow-x-auto` swipe strip, and a wide inset there would
- *    extend the strip's scrollable width.
+ *  - Inset is HARD-CAPPED at half the grid gutter, and this is load-bearing:
+ *    `lg:-inset-4` (16px) against `CardGrid`'s 32px `lg:gap-8`. An earlier
+ *    pass used `lg:-inset-10` (40px) on the theory that a soft mask made
+ *    overlap safe — it does solve the *seam* problem, but 40px into a 32px
+ *    gutter means the pool reaches 8px INTO the neighbouring card's
+ *    footprint, and because each card is a sibling in DOM order, a later
+ *    card's pool paints on top of an earlier card's panel. Visible result:
+ *    card 3's shadow smeared onto card 2, and the second grid row's shadows
+ *    smeared onto the bottom edge of the row above. Capping at half the
+ *    gutter means adjacent pools meet at the gutter's midline (where the
+ *    mask has already faded to transparent) and neither can ever touch a
+ *    neighbour's box. Mobile/tablet stay at `-inset-2` (8px): the 24px `sm`
+ *    gutter allows 12px, and the veil also sits inside `CardGrid`'s
+ *    `overflow-x-auto` swipe strip where a wide inset would extend the
+ *    strip's scrollable width.
  *  - On `lg:group-hover` (desktop pointer) and `group-active` (touch tap) the
  *    veil fades fully to `opacity-0`. Still no `blur` and no pointer
  *    tracking — the plane itself never moves, never brightens, and has no
@@ -103,7 +110,7 @@ const MATERIAL_VEIL_MASK =
   "radial-gradient(ellipse at center, #000 0%, #000 55%, rgb(0 0 0 / 0.5) 78%, transparent 100%)";
 
 const MATERIAL_BACKDROP_CLASS =
-  "pointer-events-none absolute -inset-2 lg:-inset-10 z-0 bg-ink/80 " +
+  "pointer-events-none absolute -inset-2 lg:-inset-4 z-0 bg-ink/80 " +
   "motion-safe:transition-opacity motion-safe:duration-500 ease-out " +
   "lg:group-hover:opacity-0 group-active:opacity-0";
 
