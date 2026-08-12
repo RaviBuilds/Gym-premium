@@ -1,7 +1,7 @@
 import Image from "next/image";
 import { PageSection } from "@/components/layout";
 import { Eyebrow, Heading, BodyText, PricingTeaserCallout } from "@/components/ui";
-import { AnimationWrapper } from "@/components/motion";
+import { AnimationWrapper, CameraLayer } from "@/components/motion";
 
 /**
  * WhyInfiniti — Homepage-Architecture.md §4 Philosophy / Value Story.
@@ -46,17 +46,27 @@ export function WhyInfiniti() {
           untouched behind the typography.
         */}
         <AnimationWrapper
-          variant="scale-in-settle"
+          variant="fade"
           delay={0.18}
           className="relative z-0 -mx-4 h-56 overflow-hidden sm:-mx-6 sm:h-72 lg:absolute lg:inset-y-0 lg:left-[calc(50%-50vw)] lg:mx-0 lg:h-auto lg:w-screen"
         >
-          <Image
-            src="/images/sections/philosophy/philosophy-training.webp"
-            alt=""
-            fill
-            sizes="(min-width: 1024px) 100vw, 100vw"
-            className="object-cover object-[68%_center] lg:object-[74%_center]"
-          />
+          {/* Scroll-linked drift on the camera's `background` plane — the same
+              plane the Programs environment image and Train With Purpose banner
+              use, so all three read as one depth. The entrance is a plain fade
+              rather than scale-in-settle on purpose: the wrapper's transform
+              would otherwise feed the camera's own measurement while it played.
+              Bleed and the dolly are system-owned, and the frame clips them. */}
+          <CameraLayer depth="background" fill decorative>
+            <div className="relative h-full w-full">
+              <Image
+                src="/images/sections/philosophy/philosophy-training.webp"
+                alt=""
+                fill
+                sizes="100vw"
+                className="object-cover object-[68%_center] lg:object-[74%_center]"
+              />
+            </div>
+          </CameraLayer>
 
           {/* Mobile image edges dissolve into the surrounding ink rather than reading as a card. */}
           <div

@@ -2,7 +2,12 @@ import Image from "next/image";
 import { ArrowRight } from "lucide-react";
 import { CardGrid, Icon, ProgramCard, Eyebrow, Heading, BodyText, ButtonLink } from "@/components/ui";
 import { Container } from "@/components/layout";
-import { AnimationWrapper, KineticHeadline, ParallaxLayer, MagneticButton } from "@/components/motion";
+import {
+  AnimationWrapper,
+  CameraLayer,
+  KineticHeadline,
+  MagneticButton,
+} from "@/components/motion";
 import { programs } from "@/content/programs";
 
 /**
@@ -154,15 +159,29 @@ export function Programs() {
           warms the heading area, vignette adds edge depth, a left-side depth
           gradient adds perceived lighting, and the bottom blend uses a
           5-stop gradual dissolve so the image completely disappears into the
-          section background with zero visible edge. Static — no parallax. */}
+          section background with zero visible edge. The image itself drifts
+          vertically on scroll through the shared camera (see below). */}
       <div className="relative h-[280px] w-full overflow-hidden sm:h-[320px] lg:h-[380px]">
-        <Image
-          src="/images/programs/programs-environment.webp"
-          alt=""
-          fill
-          sizes="100vw"
-          className="object-cover"
-        />
+        {/* The camera's `background` plane, not ParallaxLayer: ParallaxLayer's
+            scroll range only starts once this frame's top passes the viewport
+            top, so its drift was spent while the image was already leaving the
+            screen. The camera measures the image's whole passage through the
+            viewport and centres the travel around its layout position, so the
+            movement is visible the entire time the image is on screen. Bleed
+            and the 1.045→1.0 dolly are system-owned, so travel can never
+            expose an edge; amplitude scales down per breakpoint and parks
+            completely under prefers-reduced-motion. */}
+        <CameraLayer depth="background" fill decorative>
+          <div className="relative h-full w-full">
+            <Image
+              src="/images/programs/programs-environment.webp"
+              alt=""
+              fill
+              sizes="100vw"
+              className="object-cover"
+            />
+          </div>
+        </CameraLayer>
 
         {/* Top fade — soft blend from the dark TrustStrip above */}
         <div
@@ -316,10 +335,11 @@ export function Programs() {
 
 /**
  * TrainingBanner — full-width cinematic pause between the two Programs
- * rows. Reuses Facilities.tsx's exact banner pattern (ParallaxLayer +
+ * rows. Same banner pattern as Facilities (scroll-linked media plane +
  * Image + overlay, same height scale) rather than inventing a new one, so
- * this section's "movement" comes from an established, already-verified
- * technique. Negative margins pull it out to the PageSection's own edges
+ * this section's "movement" comes from an established technique — now the
+ * camera's `background` plane, matching the environment image at the top of
+ * this section. Negative margins pull it out to the PageSection's own edges
  * (its parent PageSection uses the default "full" bleed with an inner
  * Container, so the banner needs to escape that Container's max-width/
  * padding to read as full-bleed) without needing bleed="content" on the
@@ -331,15 +351,15 @@ export function Programs() {
 function TrainingBanner() {
   return (
     <div className="relative -mx-4 my-14 h-56 overflow-hidden sm:-mx-6 sm:h-72 lg:-mx-12 lg:my-20 lg:h-[26rem] wide:-mx-20">
-      <ParallaxLayer className="absolute inset-0" disableOnMobile>
-        {/* Explicit height per breakpoint, not a % — ParallaxLayer's own
-            motion.div wrapper has no set height (auto), so a percentage
-            here would resolve against that auto height and collapse to 0
-            (exactly the Next Image "fill + height 0" warning). Hero.tsx's
-            banner uses the same explicit-height approach for the same
-            reason. The lg value adds parallaxMax's 40px as a buffer so the
-            image never reveals a gap at the extremes of its scroll drift. */}
-        <div className="relative h-56 w-full sm:h-72 lg:h-114">
+      {/* Moved from ParallaxLayer to the camera's `background` plane, matching
+          the environment image above. ParallaxLayer only began drifting once
+          this frame's top had passed the viewport top, so the travel was spent
+          as the banner left the screen; the camera spends it across the whole
+          passage instead. The system owns the bleed, so the explicit
+          taller-than-frame image height ParallaxLayer needed is gone — the
+          plane's own overscan covers the travel and the dolly. */}
+      <CameraLayer depth="background" fill decorative>
+        <div className="relative h-full w-full">
           <Image
             src="/training-energy-banner.webp"
             alt=""
@@ -348,7 +368,7 @@ function TrainingBanner() {
             className="object-cover"
           />
         </div>
-      </ParallaxLayer>
+      </CameraLayer>
 
       <div aria-hidden="true" className="absolute inset-0 bg-ink/55" />
       {/* Cinematic vignette — tuned so the copy block (vertically AND
