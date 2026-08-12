@@ -35,10 +35,21 @@ import { programs } from "@/content/programs";
  * visible rectangle, or an obvious image boundary. Fully static — no
  * parallax, no animation, no scroll listener.
  *
- * Deliberately near-invisible: `PATTERN_OPACITY` targets ~6-8% visibility —
- * the goal is "the cards feel expensive", not "there is a background
- * pattern". If the texture ever reads as an obvious pattern rather than a
- * quiet material, lower this constant first before changing anything else.
+ * Opacity rationale — READ THIS BEFORE LOWERING IT AGAIN. An earlier pass
+ * set this to 0.07 chasing "invisible at rest", which made the hover reveal
+ * (ProgramCard's `MATERIAL_BACKDROP_CLASS` veil fading out) physically
+ * impossible to perceive: a 7% pattern over the section's ~rgb(30,33,38)
+ * backdrop lands its brightest lines around rgb(40) — a ~10-level shift —
+ * so clearing the veil moved those pixels roughly rgb(32) → rgb(40) and read
+ * as no change at all. A SINGLE static plane cannot be both invisible at
+ * rest and clearly visible on hover, because both states share it. The
+ * quietness at rest is therefore enforced by the VEIL (which is dense and
+ * covers the gutters), not by crushing this value. At 0.25 the pattern's
+ * highlights land near rgb(67), so veiled it reads ~rgb(32) (indistinguish-
+ * able from the backdrop) and un-veiled it reads ~rgb(67) — a >2x jump that
+ * is actually perceptible as a surface being exposed. If the gutters ever
+ * read as wallpaper, raise the veil's density (`bg-ink/75`) before touching
+ * this.
  *
  * Positioning: `absolute inset-0` inside each row's own `relative` wrapper
  * (see call sites below), at `z-0`. That wrapper's actual content
@@ -48,14 +59,37 @@ import { programs } from "@/content/programs";
  * guarantees no horizontal overflow and no visible left/right image edge at
  * any breakpoint. Each `ProgramCard`'s own dark veil (its resting "shadow",
  * see ProgramCard's MATERIAL_BACKDROP_CLASS) still sits above this plane and
- * fades on hover to let the pattern shine through faintly around that card.
+ * fades fully out on hover, exposing this material in a band around that one
+ * card while every neighbouring card's veil keeps its own area dimmed.
  */
 const PATTERN_URL = "url('/images/sections/programs/luxury-grid-pattern.webp')";
 const PATTERN_SIZE = "100% auto"; // full width, natural aspect ratio — no stretch
 const PATTERN_REPEAT = "repeat-y"; // tile downward for a continuous backdrop within the row
-const PATTERN_OPACITY = 0.07; // ~7% visibility — material, not wallpaper
+const PATTERN_OPACITY = 0.25; // see doc comment — quietness comes from the scrim, not this value
 const PATTERN_FADE_MASK =
   "linear-gradient(to bottom, transparent 0px, #000 56px, #000 calc(100% - 56px), transparent 100%)";
+
+/**
+ * Full-bleed ambient scrim alpha. This is the layer that makes the pattern
+ * read QUIET, and it spans the plane's entire width — critically including
+ * the Container's own horizontal padding (48px at `lg`, 80px at `wide`),
+ * which the per-card veils in ProgramCard can never reach because cards only
+ * exist inside the Container. Without this, the pattern showed at full
+ * strength in those outer margins while the card zone was dimmed, producing
+ * two bright vertical bands down the left/right edges of the section.
+ *
+ * Layer order inside the plane (bottom → top):
+ *   1. pattern image  @ PATTERN_OPACITY  — the material itself
+ *   2. this scrim     @ PLANE_SCRIM_ALPHA — uniform ambient dimming, full width
+ * Then, above the plane entirely, each ProgramCard adds its own soft-edged
+ * veil that dims its immediate surroundings further at rest and dissolves on
+ * hover — so hover brightens back up to this ambient level, never past it.
+ *
+ * The scrim must be a SIBLING of the pattern layer, not a wrapper style: if
+ * both lived on one element, `opacity: PATTERN_OPACITY` would fade the scrim
+ * to 25% too and it would stop dimming anything.
+ */
+const PLANE_SCRIM_ALPHA = 0.45;
 
 function ProgramMaterialPlane() {
   return (
@@ -63,15 +97,28 @@ function ProgramMaterialPlane() {
       aria-hidden="true"
       className="pointer-events-none absolute inset-0 z-0 overflow-hidden"
       style={{
-        backgroundImage: PATTERN_URL,
-        backgroundSize: PATTERN_SIZE,
-        backgroundRepeat: PATTERN_REPEAT,
-        backgroundPosition: "top center",
-        opacity: PATTERN_OPACITY,
+        // The fade mask lives on the wrapper so it applies to the pattern and
+        // the scrim together — they dissolve into the section background at
+        // the row's top/bottom edge as one unit, with no seam between them.
         WebkitMaskImage: PATTERN_FADE_MASK,
         maskImage: PATTERN_FADE_MASK,
       }}
-    />
+    >
+      <div
+        className="absolute inset-0"
+        style={{
+          backgroundImage: PATTERN_URL,
+          backgroundSize: PATTERN_SIZE,
+          backgroundRepeat: PATTERN_REPEAT,
+          backgroundPosition: "top center",
+          opacity: PATTERN_OPACITY,
+        }}
+      />
+      <div
+        className="absolute inset-0"
+        style={{ backgroundColor: `rgb(20 24 29 / ${PLANE_SCRIM_ALPHA})` }}
+      />
+    </div>
   );
 }
 

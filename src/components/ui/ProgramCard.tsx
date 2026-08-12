@@ -30,18 +30,19 @@ const focalPointOverrides: Partial<Record<Program["slug"], string>> = {
 
 /**
  * Premium choreography tokens — the ProgramCard `motion="premium"` mode's
- * additive motion vocabulary. Reveal travel (14px) sits on the 8px spacing
- * scale and inside the 12–18px premium brief; duration 0.7s is the premium
- * range; the easing reuses the exact curve Hero's CTA already uses
- * (`[0.22, 1, 0.36, 1]`) rather than inventing a new one. The inner content
- * stagger (70ms between image/title/description/CTA) matches the premium
- * 60–90ms brief. Reduced motion: when `prefers-reduced-motion` is active,
- * the whole premium path collapses to the plain static rendering — the
- * `motion="premium"` flag is effectively ignored and the final DOM state is
- * shown immediately, matching every other motion primitive's contract.
+ * additive motion vocabulary. Reveal travel (48px) sits on the 8px spacing
+ * scale and inside the 40-60px "rising from below" brief; duration 0.7s is
+ * the premium range; the easing reuses the exact curve Hero's CTA already
+ * uses (`[0.22, 1, 0.36, 1]`) rather than inventing a new one. The inner
+ * content stagger (70ms between image/title/description/CTA) matches the
+ * premium 60–90ms brief. Reduced motion: when `prefers-reduced-motion` is
+ * active, the whole premium path collapses to the plain static rendering —
+ * the `motion="premium"` flag is effectively ignored and the final DOM
+ * state is shown immediately, matching every other motion primitive's
+ * contract.
  */
 const PREMIUM_REVEAL = {
-  hidden: { opacity: 0, y: 14, scale: 0.97 },
+  hidden: { opacity: 0, y: 48, scale: 0.97 },
   visible: {
     opacity: 1,
     y: 0,
@@ -71,23 +72,40 @@ const PREMIUM_ITEM = {
  * so the "physical elevation, not a lighting effect" balance is one
  * documented decision.
  *
- *  - Rest veil `bg-ink/40`: 40% Ink over the pattern at rest, so the pattern
- *    reads only faintly through it. The alpha is carried on the color
- *    (`/40`) — not element opacity — so the element's own `opacity` stays
- *    free for the hover fade below.
- *  - On `lg:group-hover` (desktop pointer) and `group-active` (touch tap)
- *    the veil eases to `opacity-50` (half its resting density) rather than
- *    fully vanishing — the material becomes marginally easier to perceive,
- *    it does not suddenly brighten or uncover. Deliberately no `blur` and a
- *    tight `-inset-1` (not a multi-pixel spread): a blurred, wide veil
- *    fading to fully transparent reads as a halo/spotlight switching on;
- *    a tight, unblurred veil that only partially fades reads as the card's
- *    own shadow softening as it lifts — physical depth, not a lighting cue.
+ *  - Rest veil `bg-ink/80`: additional dimming ON TOP of the plane's own
+ *    full-bleed ambient scrim (see Programs.tsx's `PLANE_SCRIM_ALPHA`), so
+ *    the material immediately around each card is pushed down to roughly the
+ *    section backdrop's value while the wider section stays at the ambient
+ *    level. At rest this reads as the card's own soft shadow pooled on the
+ *    surface; on hover it dissolves and the area brightens back up to
+ *    ambient — never past it, so nothing ever looks lit from within.
+ *  - `MATERIAL_VEIL_MASK` is what stops this reading as a "fixed square".
+ *    An unmasked rectangle fading out announces its own hard edges — you see
+ *    a crisp box of lighter material switch on. The radial mask gives the
+ *    veil a soft elliptical falloff instead, so what dissolves has no
+ *    perceivable boundary: dense across the card's own footprint, thinning
+ *    through ~78%, fully transparent at the outer edge.
+ *  - Because the falloff is soft, adjacent veils can now safely overlap —
+ *    two gradients blending produces a gradual gradient, not the hard seam
+ *    that overlapping flat rectangles produced. That's what allows a much
+ *    larger `lg:-inset-10` (40px) reveal band than the old hard-edged
+ *    `-inset-1` (4px), which was too small to perceive. Mobile stays at
+ *    `-inset-2` (8px) deliberately: the veil is absolutely positioned inside
+ *    `CardGrid`'s `overflow-x-auto` swipe strip, and a wide inset there would
+ *    extend the strip's scrollable width.
+ *  - On `lg:group-hover` (desktop pointer) and `group-active` (touch tap) the
+ *    veil fades fully to `opacity-0`. Still no `blur` and no pointer
+ *    tracking — the plane itself never moves, never brightens, and has no
+ *    cursor-following component. The soft edge comes from a static mask, not
+ *    from a light source.
  */
+const MATERIAL_VEIL_MASK =
+  "radial-gradient(ellipse at center, #000 0%, #000 55%, rgb(0 0 0 / 0.5) 78%, transparent 100%)";
+
 const MATERIAL_BACKDROP_CLASS =
-  "pointer-events-none absolute -inset-1 z-0 rounded-card bg-ink/40 " +
+  "pointer-events-none absolute -inset-2 lg:-inset-10 z-0 bg-ink/80 " +
   "motion-safe:transition-opacity motion-safe:duration-500 ease-out " +
-  "lg:group-hover:opacity-50 group-active:opacity-50";
+  "lg:group-hover:opacity-0 group-active:opacity-0";
 
 /**
  * Elevation shadow — a dark-backdrop-visible cast shadow for the card,
@@ -112,13 +130,20 @@ const MATERIAL_BACKDROP_CLASS =
  * pointer-tracking — the material plane behind it (Programs.tsx's
  * `ProgramMaterialPlane`) never moves or brightens; only this shadow's own
  * blur/alpha eases on interaction.
+ *
+ * The hover alpha (0.2) is deliberately lower than a naive "half the rest
+ * value" would be, because this shadow blurs outward across the exact same
+ * pixels the veil clears on hover — at 0.45+ it crushed the material it was
+ * supposed to be revealing. Keeping a residual 0.2 is still correct
+ * physically: a lifted card's shadow SHOULD darken the surface immediately
+ * beneath it, with the material reading brighter further out.
  */
 const ELEVATION_SHADOW_CLASS =
   "pointer-events-none absolute inset-0 z-0 rounded-card " +
   "shadow-[0_10px_28px_rgb(0_0_0_/_0.45)] " +
   "motion-safe:transition-shadow motion-safe:duration-500 ease-out " +
-  "lg:group-hover:shadow-[0_18px_40px_rgb(0_0_0_/_0.3)] " +
-  "group-active:shadow-[0_18px_40px_rgb(0_0_0_/_0.3)]";
+  "lg:group-hover:shadow-[0_18px_40px_rgb(0_0_0_/_0.2)] " +
+  "group-active:shadow-[0_18px_40px_rgb(0_0_0_/_0.2)]";
 
 /** Breathing loop — near-invisible ambient scale on the image layer only.
  *  Not `as const` on the whole object — Framer Motion requires mutable
@@ -207,16 +232,21 @@ export function ProgramCard({
               transition: { duration: 0.22, ease: [0.16, 1, 0.3, 1] },
             })}
       >
-        {/* Material backdrop — the card's resting "shadow": a soft dark
-            veil that dims the premium pattern plane behind the Programs
-            card row so it reads only faintly at rest. On desktop hover
-            (and touch active) this card's veil eases to half its resting
-            density — the material becomes marginally easier to perceive,
-            it does not uncover or brighten. Purely a veil over the shared
-            plane; the plane itself never moves. Under reduced motion the
-            fade is instant (motion-safe: gate), the final state is still
-            reachable, so no content depends on animation. */}
-        <div aria-hidden="true" className={MATERIAL_BACKDROP_CLASS} />
+        {/* Material backdrop — the card's resting "shadow": a soft-edged
+            dark pool that dims the premium pattern plane immediately around
+            this card, on top of the plane's own full-bleed ambient scrim.
+            On desktop hover (and touch active) it dissolves, so the material
+            around the elevated card brightens back up to the ambient level
+            with no perceivable edge. Purely a veil over the shared plane;
+            the plane itself never moves, brightens, or gains a
+            pointer-tracked effect. Under reduced motion the fade is instant
+            (motion-safe: gate), the final state is still reachable, so no
+            content depends on animation. */}
+        <div
+          aria-hidden="true"
+          className={MATERIAL_BACKDROP_CLASS}
+          style={{ WebkitMaskImage: MATERIAL_VEIL_MASK, maskImage: MATERIAL_VEIL_MASK }}
+        />
 
         {/* Elevation shadow — see ELEVATION_SHADOW_CLASS doc comment. Sits
             between the material veil and the card panel, sized to match the
