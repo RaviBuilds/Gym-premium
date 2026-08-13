@@ -78,7 +78,7 @@ export function Facilities() {
       />
       <div className="relative z-10 flex flex-col gap-10">
         <SectionHeader
-          eyebrow="Inside The Gym"
+          eyebrow="Everything You Need"
           heading="Everything you need, nothing you're paying extra for"
           tone="light"
         />

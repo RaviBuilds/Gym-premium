@@ -2,6 +2,7 @@ export { Hero } from "./Hero";
 export { TrustStrip } from "./TrustStrip";
 export { Programs } from "./Programs";
 export { WhyInfiniti } from "./WhyInfiniti";
+export { InsideTheGym } from "./InsideTheGym";
 export { Facilities } from "./Facilities";
 export { TrainerShowcase } from "./TrainerShowcase";
 export { Testimonials } from "./Testimonials";
