@@ -44,23 +44,35 @@ import { AnimationWrapper, CameraGroup, CameraLayer } from "@/components/motion"
  * layout: a pinned composition would need a second independent scroll
  * subscription running alongside the camera's own, which is exactly the
  * "two systems own the same transform" problem the camera architecture
- * exists to avoid. The entrance scale (`scale-in-settle`, 1.06→1.0) is
- * nested INSIDE CameraLayer, wrapping only the <Image> — not wrapping
- * CameraLayer itself — for the same reason WhyInfiniti's own comment
- * documents: transforming the element CameraLayer measures would feed the
- * camera's own measurement while the entrance plays. AnimationWrapper
- * handles the one-time entrance for the image and for each line of text,
- * same as every other section; none of that shared file is modified here.
+ * exists to avoid. The image's own entrance is a plain `fade` (not
+ * `scale-in-settle`) nested INSIDE CameraLayer, wrapping only the <Image> —
+ * not wrapping CameraLayer itself — for the same reason WhyInfiniti's own
+ * comment documents: transforming the element CameraLayer measures would
+ * feed the camera's own measurement while the entrance plays. `fade` over
+ * `scale-in-settle` is deliberate here: a 6% scale pop-in on a full-viewport
+ * photograph reads as "website element animating in" rather than "walking
+ * into a room" — WhyInfiniti's own full-bleed image uses the same plain
+ * fade for the same reason. AnimationWrapper handles the one-time entrance
+ * for the image and for each line of text, same as every other section;
+ * none of that shared file is modified here.
  */
 export function InsideTheGym() {
   return (
-    <PageSection tone="dark" spacing="compact" className="relative overflow-hidden">
-      {/* Short, deliberate emergence out of WhyInfiniti's dark tone — no hard
-          edge, no gap-then-band. Tightened from the previous pass's larger
-          band now that section spacing itself is also tighter. */}
+    <PageSection
+      tone="dark"
+      spacing="compact"
+      className="relative overflow-hidden pt-6 pb-0 lg:pt-8 lg:pb-0"
+    >
+      {/* Short, atmospheric emergence out of WhyInfiniti's dark tone — sized
+          to slightly overlap the top of the image below (rather than sit in
+          the flat padding gap above it) so it reads as the photo dissolving
+          in, not as extra section spacing. The section's own top padding
+          above is now just a small breath (pt-6/lg:pt-8), not a full
+          `standard`/`compact` py — that doubled-up gap was the source of the
+          previous dead space. */}
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-x-0 top-0 z-[1] h-10 sm:h-12 lg:h-16"
+        className="pointer-events-none absolute inset-x-0 top-0 z-[1] h-8 sm:h-10 lg:h-12"
         style={{
           background: "linear-gradient(180deg, rgb(20,24,29) 0%, transparent 100%)",
         }}
@@ -69,7 +81,7 @@ export function InsideTheGym() {
       <div className="relative -mx-4 h-[56vh] overflow-hidden sm:-mx-6 sm:h-[62vh] lg:left-[calc(50%-50vw)] lg:mx-0 lg:h-[78vh] lg:w-screen">
         {/* Background Plane — the training floor photograph. */}
         <CameraLayer depth="background" fill decorative>
-          <AnimationWrapper variant="scale-in-settle" className="relative h-full w-full">
+          <AnimationWrapper variant="fade" className="relative h-full w-full">
             <Image
               src="/images/sections/inside-gym/inside-gym-hero.webp"
               alt="The training floor at Infiniti Fitness — squat racks, battle ropes, and free weights in use"
@@ -81,8 +93,8 @@ export function InsideTheGym() {
           </AnimationWrapper>
         </CameraLayer>
 
-        {/* Top scrim — lightened from the previous pass. Only enough to lift
-            the eyebrow/headline/body to AA contrast; the gym's own warm
+        {/* Top scrim — vertical fade for the eyebrow/headline row. Only
+            enough to lift the text to AA contrast; the gym's own warm
             practical lighting stays visible below it. Purely for text
             readability, not for darkening the photograph. */}
         <div
@@ -91,6 +103,22 @@ export function InsideTheGym() {
           style={{
             background:
               "linear-gradient(180deg, rgba(20,24,29,0.68) 0%, rgba(20,24,29,0.32) 45%, transparent 100%)",
+          }}
+        />
+
+        {/* Left-to-right text-protection gradient — localized to the text
+            column only. The vertical scrim above treats the whole width
+            evenly, which left the supporting copy competing with the
+            brighter window/pendant-light area behind it. This adds darkening
+            ONLY on the left ~35% of the frame and fades to fully transparent
+            by 60% width, well before the right-side athlete and equipment —
+            a soft editorial gradient, not a spotlight or a flat rectangle. */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0"
+          style={{
+            background:
+              "linear-gradient(90deg, rgba(20,24,29,0.5) 0%, rgba(20,24,29,0.22) 35%, transparent 60%)",
           }}
         />
 
@@ -120,10 +148,13 @@ export function InsideTheGym() {
         </CameraGroup>
       </div>
 
-      {/* Hands off to Facilities' own top blend (dark→light) with no gap. */}
+      {/* Hands off to Facilities' own top blend (dark→light) with no gap.
+          Kept to the minimum height that still reads as a dissolve rather
+          than a second visible dark band — Facilities' own top blend does
+          the rest of the light transition work from its side. */}
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-x-0 bottom-0 z-[1] h-10 sm:h-12 lg:h-16"
+        className="pointer-events-none absolute inset-x-0 bottom-0 z-[1] h-6 sm:h-8 lg:h-10"
         style={{
           background: "linear-gradient(0deg, rgb(20,24,29) 0%, transparent 100%)",
         }}
