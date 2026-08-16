@@ -25,5 +25,9 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
+# test artifacts
+/coverage/
+/.vitest-reports/
+
 # vercel
 .vercel

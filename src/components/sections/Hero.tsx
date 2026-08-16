@@ -106,14 +106,20 @@ export function Hero() {
 
           {/* CTA Plane — one step shallower than the content plane above it,
               so it reads as physically closer to the viewer. */}
-          <CameraGroup depth="cta" className="w-full max-w-120 pl-4 sm:pl-5">
+          {/* `max-w-140` (560px), up from `max-w-120` (480px). At 480px the two
+              labels could not sit side by side once the buttons' own padding was
+              counted, so "Book Free / Trial" and "See Membership / Plans" each broke
+              onto a second line — the defect visible in the hero. `whitespace-nowrap`
+              on both buttons is the actual guarantee; the wider cap is what stops
+              that guarantee from forcing a horizontal overflow instead. */}
+          <CameraGroup depth="cta" className="w-full max-w-140 pl-4 sm:pl-5">
             <div className="flex flex-col gap-3 sm:flex-row sm:gap-4">
               <MagneticButton className="w-full sm:w-auto">
                 <motion.div
                   whileHover={{ y: -2, scale: 1.02 }}
                   transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
                 >
-                  <ButtonLink href="/#free-trial" variant="primary" className="w-full sm:w-auto shadow-lg hover:shadow-brand-yellow/30 transition-shadow">
+                  <ButtonLink href="/#free-trial" variant="primary" className="w-full whitespace-nowrap sm:w-auto shadow-lg hover:shadow-brand-yellow/30 transition-shadow">
                     Book Free Trial
                   </ButtonLink>
                 </motion.div>
@@ -123,7 +129,7 @@ export function Hero() {
                 transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
                 className="w-full sm:w-auto"
               >
-                <ButtonLink href="/pricing" variant="secondary" className="group w-full text-white sm:w-auto hover:bg-white/10 hover:border-white/20 hover:text-white transition-colors duration-500 ease-premium">
+                <ButtonLink href="/#pricing" variant="secondary" className="group w-full whitespace-nowrap text-white sm:w-auto hover:bg-white/10 hover:border-white/20 hover:text-white transition-colors duration-500 ease-premium">
                   See Membership Plans
                   <motion.span variants={{ hover: { x: 2 } }} className="ml-2 transition-transform duration-500 ease-premium">
                     &rarr;
@@ -145,13 +151,16 @@ export function Hero() {
             <span>Real coaching</span>
           </div>
 
-          <div className="lg:hidden">
+          <div className="flex w-full justify-center lg:hidden">
             <HeroScrollCue />
           </div>
         </motion.div>
       </Container>
 
-      <div className="absolute inset-x-0 z-50 hidden justify-center bottom-6 lg:flex">
+      {/* `z-30` for the same reason as SceneNavigator: at `z-50` this tied with the
+          sticky Navbar and, being later in the DOM, won — so "Explore Training"
+          scrolled up over the navigation. See SceneNavigator's own note. */}
+      <div className="absolute inset-x-0 z-30 hidden justify-center bottom-6 lg:flex">
         <HeroScrollCue />
       </div>
     </section>

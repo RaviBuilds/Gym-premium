@@ -9,4 +9,5 @@ export type { GridProps } from "./Grid";
 
 export { Navbar } from "./Navbar";
 export { StickyMobileCTA } from "./StickyMobileCTA";
+export { FloatingContactDock } from "./FloatingContactDock";
 export { Footer } from "./Footer";

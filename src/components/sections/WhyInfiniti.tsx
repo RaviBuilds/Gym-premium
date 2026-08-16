@@ -15,6 +15,7 @@ import { AnimationWrapper, CameraLayer } from "@/components/motion";
 export function WhyInfiniti() {
   return (
     <PageSection
+      id="about"
       tone="dark"
       spacing="standard"
       className="relative overflow-hidden lg:min-h-[34rem] lg:py-28"

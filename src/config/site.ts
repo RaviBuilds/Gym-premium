@@ -17,12 +17,29 @@ export const siteConfig = {
   description:
     "Infiniti Fitness is a Hyderabad gym with two locations (Gachibowli & Rethibowli) offering Crossfit, HIIT, Strength Training, Kickboxing, and more — real trainers, honest pricing, since 2016.",
   url: SITE_URL,
-  // Points at a real, existing photo rather than a placeholder path — a
-  // missing OG image silently breaks link previews on WhatsApp/Twitter/
-  // Facebook, which matters given this audience shares gym links over
-  // WhatsApp per 03-target-audience.md. Swap for a purpose-cropped 1200x630
-  // image if one is ever produced; until then this is a real asset, not a 404.
-  ogImage: `${SITE_URL}/images/hero/hero-training.jpg`,
+  // A purpose-cropped 1200x630 JPEG — the exact dimensions Open Graph and
+  // Twitter both want, so no platform re-crops it unpredictably.
+  //
+  // This previously pointed at `/images/hero/hero-training.jpg`, with a comment
+  // claiming it was "a real asset, not a 404". It was a 404: no such file has
+  // ever existed in `public/images/hero/`, which holds `hero-gym-wide.webp`,
+  // `hero-strength-closeup.webp` and seven other `.webp` files — and no `.jpg`
+  // at all. So every WhatsApp, Twitter and Facebook share of this site rendered
+  // a blank preview card, which is the one thing the original comment was
+  // written to prevent, and it matters most for exactly the audience
+  // 03-target-audience.md describes: people who pass gym links around on
+  // WhatsApp.
+  //
+  // Generated from the hero's own wide gym shot, so the preview matches the
+  // first thing a visitor sees on arrival:
+  //   ffmpeg -y -i public/images/hero/hero-gym-wide.webp \
+  //     -vf "scale=1200:630:force_original_aspect_ratio=increase,crop=1200:630" \
+  //     -q:v 3 public/og-default.jpg
+  //
+  // JPEG rather than WebP deliberately: WebP OG images are still unreliable
+  // across scrapers, and a preview image is the one place to pick the format
+  // with the widest support rather than the smallest bytes.
+  ogImage: `${SITE_URL}/og-default.jpg`,
   founder: "Omar Siddiqui",
   foundedYear: 2016,
   links: {

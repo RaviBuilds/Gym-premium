@@ -15,8 +15,8 @@ import { cn } from "@/lib/utils";
  *  hover transform   translateY(-4px)
  *  transition        220ms ease-out, transform + shadow together
  *
- * ProgramCard / TrainerCard / LocationCard / TestimonialCard (secondary) all
- * compose this base rather than redefining radius/shadow/hover themselves.
+ * ProgramCard / LocationCard / TestimonialCard (secondary) all compose this
+ * base rather than redefining radius/shadow/hover themselves.
  * TestimonialPullQuote deliberately does NOT use this component — per §6 it
  * has no shadow/border at all, styled as a magazine pull-quote instead.
  */
@@ -80,7 +80,7 @@ export const Card = forwardRef<HTMLDivElement, CardProps>(function Card(
 
 /**
  * Convenience media slot for the "image fills top ~70/75% of the card"
- * pattern shared by ProgramCard/TrainerCard/LocationCard (§6). Composed
+ * pattern shared by ProgramCard/LocationCard (§6). Composed
  * inside Card by those higher-level components — kept here since the
  * overflow-clipping + radius-matching behavior is identical across all of
  * them and shouldn't be reimplemented per card type.

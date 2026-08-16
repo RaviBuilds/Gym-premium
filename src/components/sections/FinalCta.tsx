@@ -73,7 +73,7 @@ export function FinalCta() {
             <ButtonLink href="/#free-trial" variant="primary">
               Book Free Trial
             </ButtonLink>
-            <ButtonLink href="/pricing" variant="secondary" className="text-white">
+            <ButtonLink href="/#pricing" variant="secondary" className="text-white">
               View Membership Plans
             </ButtonLink>
             <ButtonLink href={siteConfig.links.whatsapp} variant="whatsapp">

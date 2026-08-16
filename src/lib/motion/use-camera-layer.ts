@@ -11,6 +11,7 @@ import {
 import {
   CAMERA_SPRING,
   DEPTH_LAYERS,
+  cameraY,
   resolveAmplitude,
   type DepthLayer,
 } from "./camera-tokens";
@@ -125,7 +126,11 @@ export function useCameraLayer(
 
   const isStatic = cameraIsStatic || amplitude === 0;
 
-  const y = useTransform(progress, [0, 1], [-amplitude / 2, amplitude / 2]);
+  // The mapping itself lives in `camera-tokens` as `cameraY`, so the shipped
+  // transform and the tested pure function are one code path. Identical output
+  // to the `[0, 1] -> [-a/2, a/2]` range form this replaces: that form clamps
+  // its input by default, which is the clamp `cameraY` now performs explicitly.
+  const y = useTransform(progress, (latest) => cameraY(latest, amplitude));
   const scale = useTransform(
     progress,
     [0, 1],

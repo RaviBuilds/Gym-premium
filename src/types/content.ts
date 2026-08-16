@@ -16,14 +16,63 @@ export interface Program {
   imageAlt: string;
 }
 
+/** One label/value credential row in a coach's dossier. */
+export interface TrainerCredential {
+  /** Tracked micro-caps label, e.g. "Certification", "Experience". */
+  label: string;
+  /** The fact itself, e.g. "ACE CPT", "9 years". */
+  value: string;
+}
+
 export interface Trainer {
+  // ── existing, unchanged ────────────────────────────────────────────
   slug: string;
   name: string;
   title: string;
-  /** e.g. "Mr Nizamabad" — Mohammed Wajeed's competitive title. Rendered via <Badge variant="achievement">. */
+  /**
+   * e.g. "Mr Nizamabad" — Mohammed Wajeed's competitive title. Rendered via
+   * <Badge variant="achievement">.
+   *
+   * Retained for back-compat. Superseded by `signatureAchievement` — prefer
+   * that field for new content.
+   */
   achievementBadge?: string;
   imageSrc: string;
   imageAlt: string;
+
+  // ── new ───────────────────────────────────────────────────────────
+  /** 1–3 speciality tags rendered as hex-pipped micro-caps. REQUIRED:
+   *  every coach must be answerable to "what do they actually coach?".
+   *  Derived from each coach's existing `title` when nothing richer is
+   *  supplied — never invented. */
+  discipline: string[];
+
+  /** Whole years on the floor. Renders a credential row + feeds the
+   *  section's combined-years CountUp. Omit rather than estimate. */
+  yearsExperience?: number;
+
+  /** Named certifications, verbatim. Rendered as credential rows. */
+  certifications?: string[];
+
+  /** The one most sellable fact about this coach, e.g. "Mr Nizamabad".
+   *  Rendered via <Badge variant="achievement">. */
+  signatureAchievement?: string;
+
+  /** One line, first person or declarative, ≤ 90 chars. The dossier's
+   *  human beat. */
+  philosophy?: string;
+
+  /** Backdrop depth plate — public/back/{slug}.jpg. Revealed at 16%
+   *  opacity on hover/focus, desktop only. */
+  backdropSrc?: string;
+
+  /** Per-coach CTA target. Falls back to the section-level booking
+   *  target when absent. */
+  ctaHref?: string;
+
+  /** Exactly one trainer in the array may set this. Drives lead
+   *  selection instead of relying on array position. */
+  lead?: boolean;
 }
 
 export interface Testimonial {

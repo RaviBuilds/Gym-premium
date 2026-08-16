@@ -27,3 +27,6 @@ export { MagneticButton } from "./MagneticButton";
 export { ScrollProgressBar } from "./ScrollProgressBar";
 
 export { KineticHeadline } from "./KineticHeadline";
+
+export { MaskedLine } from "./MaskedLine";
+export type { MaskedLineProps } from "./MaskedLine";

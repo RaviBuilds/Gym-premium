@@ -1,8 +1,19 @@
+import type { LucideIcon } from "lucide-react";
+import { Sunrise, CalendarDays, Crown } from "lucide-react";
+
 export interface PricingTier {
   duration: string;
   listPrice: string;
   offerPrice?: string;
   bestSeller?: boolean;
+  /**
+   * Decorative plan glyph — same role as Facility.icon (src/content/
+   * facilities.ts): a structural/symbolic mark, not business data. Sunrise
+   * for a single day, a calendar for a recurring monthly commitment, a
+   * crown for the plan the section recommends. Purely visual — never
+   * implies a feature, benefit, or claim the plan doesn't actually have.
+   */
+  icon: LucideIcon;
 }
 
 /**
@@ -15,7 +26,7 @@ export interface PricingTier {
  * flagship branch; the full Pricing page carries the per-branch split.
  */
 export const homepagePricingTiers: PricingTier[] = [
-  { duration: "Daily", listPrice: "₹199" },
-  { duration: "Monthly", listPrice: "₹2,799", offerPrice: "₹1,999" },
-  { duration: "Yearly", listPrice: "₹15,999", offerPrice: "₹9,499", bestSeller: true },
+  { duration: "Daily", listPrice: "₹199", icon: Sunrise },
+  { duration: "Monthly", listPrice: "₹2,799", offerPrice: "₹1,999", icon: CalendarDays },
+  { duration: "Yearly", listPrice: "₹15,999", offerPrice: "₹9,499", bestSeller: true, icon: Crown },
 ];

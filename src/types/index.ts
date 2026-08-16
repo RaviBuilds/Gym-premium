@@ -1,1 +1,7 @@
-export type { Program, Trainer, Testimonial, LocationSummary } from "./content";
+export type {
+  Program,
+  Trainer,
+  TrainerCredential,
+  Testimonial,
+  LocationSummary,
+} from "./content";

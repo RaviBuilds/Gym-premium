@@ -16,8 +16,10 @@ export type { HeadingLevel } from "./Heading";
 export { CardGrid } from "./CardGrid";
 export type { CardGridProps } from "./CardGrid";
 
+export { StripNavigator } from "./StripNavigator";
+export type { StripNavigatorProps } from "./StripNavigator";
+
 export { ProgramCard } from "./ProgramCard";
-export { TrainerCard } from "./TrainerCard";
 export { LocationCard } from "./LocationCard";
 export { TestimonialCard } from "./TestimonialCard";
 export { TestimonialPullQuote } from "./TestimonialPullQuote";
@@ -34,3 +36,5 @@ export type { TextFieldProps, SelectFieldProps, CheckboxGroupProps } from "./For
 export { TrialBookingForm } from "./TrialBookingForm";
 
 export { PricingTierCard } from "./PricingTierCard";
+
+export { PricingPanel } from "./PricingPanel";

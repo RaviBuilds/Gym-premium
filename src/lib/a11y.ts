@@ -35,8 +35,8 @@ export function slugify(label: string): string {
 /**
  * Standard descriptive alt-text builders — §13 Accessibility "Alt text
  * strategy" and §Homepage-Architecture.md's per-section accessibility notes.
- * Centralizing the pattern here means every ProgramCard/TrainerCard/
- * LocationCard produces alt text in the same shape instead of ad hoc
+ * Centralizing the pattern here means every program card, trainer frame and
+ * location card produces alt text in the same shape instead of ad hoc
  * strings drifting apart across components — directly resolving the current
  * site's sitewide generic "gallery grid image" alt-text gap.
  */

@@ -119,7 +119,7 @@ const MATERIAL_BACKDROP_CLASS =
  * additive to Card's own base box-shadow rather than a replacement for it.
  * Card.tsx's rest/hover shadow (`rgba(20,24,29,0.12)` → `rgba(20,24,29,0.08)`)
  * is correct on the light `surface-light` background every other card type
- * (TrainerCard/LocationCard/TestimonialCard) sits on, but on the Programs
+ * (LocationCard/TestimonialCard) sits on, but on the Programs
  * section's charcoal-to-near-black gradient the shadow color is nearly
  * identical to the backdrop it's cast on, so it reads as invisible — not a
  * wrong *direction*, just the wrong *density* for this one dark section.
@@ -178,8 +178,8 @@ const PREMIUM_BREATHE = {
  * arrow + underline on top of what's already legible everywhere.
  *
  * The outer motion.div layers a subtle whileHover scale on top of Card's own
- * translateY/shadow lift rather than modifying Card itself, so TrainerCard/
- * LocationCard (which also compose Card) are unaffected.
+ * translateY/shadow lift rather than modifying Card itself, so LocationCard
+ * and TestimonialCard (which also compose Card) are unaffected.
  *
  * Optional `motion="premium"` mode (default `"standard"` preserves the exact
  * historical behavior): adds the premium cinematic interactions described in
@@ -209,12 +209,31 @@ export function ProgramCard({
   const premium = motionMode === "premium" && !prefersReducedMotion;
 
   const number = String(index + 1).padStart(2, "0");
-  const accessibleLabel = `${program.name} training at Infiniti Fitness — view program details`;
+  /**
+   * The card's destination and its accessible name, both changed together.
+   *
+   * This linked to `/programs/${program.slug}` for all nine disciplines, and none
+   * of those routes exist — `src/app/` holds only `page.tsx`, so every card in the
+   * grid 404'd. The trial form is the honest replacement: it is the one thing a
+   * visitor who just read "Crossfit — climb, row, lift, repeat" can actually do
+   * next, and it is where every other CTA on the page already points.
+   *
+   * The visible label changes with it, from "View Program" to "Try It Free". A link
+   * labelled "View Program" that opens a booking form is worse than a 404, because
+   * the visitor cannot tell it was deliberate. "Try It Free" also survives all nine
+   * cards, including Steam and Rock Climbing, where "Book This Class" would not.
+   *
+   * When detail pages are built, restore `/programs/${program.slug}` here and the
+   * two labels below — the slug is still on every entry in `src/content/programs.ts`,
+   * so nothing was thrown away.
+   */
+  const cardHref = "/#free-trial";
+  const accessibleLabel = `${program.name} training at Infiniti Fitness — book a free trial`;
   const delay = getStaggerDelay(index);
 
   return (
     <Link
-      href={`/programs/${program.slug}`}
+      href={cardHref}
       aria-label={accessibleLabel}
       className="group block h-full rounded-card transition-opacity duration-200 ease-out active:opacity-90"
     >
@@ -260,7 +279,7 @@ export function ProgramCard({
             card's own footprint exactly, so it reads as the card's cast
             shadow deepening/softening as it lifts — not as a background
             effect. Card.tsx's own box-shadow is unchanged (still correct
-            for TrainerCard/LocationCard on light sections); this is an
+            for LocationCard/TestimonialCard on light sections); this is an
             additive, ProgramCard-only layer for this section's dark
             backdrop. */}
         <div aria-hidden="true" className={ELEVATION_SHADOW_CLASS} />
@@ -366,7 +385,9 @@ export function ProgramCard({
               </motion.div>
               <motion.div variants={PREMIUM_ITEM} className="mt-4 flex items-center gap-2 font-body text-caption font-semibold uppercase tracking-wide text-ink">
                 <span className="relative">
-                  View Program
+                  {/* See `cardHref` above — the card books a trial rather than
+                      opening a detail page that was never built. */}
+                  Try It Free
                   <span className="absolute inset-x-0 -bottom-1 h-px origin-left scale-x-100 bg-ink transition-transform duration-300 ease-out lg:scale-x-0 lg:group-hover:scale-x-100" />
                 </span>
                 <Icon
@@ -387,7 +408,8 @@ export function ProgramCard({
 
               <div className="mt-4 flex items-center gap-2 font-body text-caption font-semibold uppercase tracking-wide text-ink">
                 <span className="relative">
-                  View Program
+                  {/* See `cardHref` above. */}
+                  Try It Free
                   <span className="absolute inset-x-0 -bottom-1 h-px origin-left scale-x-100 bg-ink transition-transform duration-300 ease-out lg:scale-x-0 lg:group-hover:scale-x-100" />
                 </span>
                 <Icon

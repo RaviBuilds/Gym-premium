@@ -212,4 +212,39 @@ export function resolveAmplitude({
   return lag * travel * intensity * multiplier;
 }
 
+/**
+ * Resolve a plane's vertical offset in px from its passage through the viewport.
+ *
+ * This is the whole camera in one line: `y = (clamp(progress, 0, 1) - 0.5) * amplitude`.
+ * It lives here, beside `resolveAmplitude`, so the mapping is a pure function of
+ * scroll position that can be reasoned about and tested without a DOM, a scroll
+ * container, or a frame loop — `useCameraLayer` calls this rather than repeating
+ * the arithmetic, so the shipped transform and the tested function are the same
+ * code path.
+ *
+ * **Why the clamp.** `progress` reaches this function through
+ * `CAMERA_SPRING`, and a spring is not required to stay inside its input's
+ * range: on a fast flick it trails the raw scroll progress and, on settle, can
+ * sit a hair outside `[0, 1]` before `restDelta` catches it. Feeding that
+ * straight through would spend amplitude the plane has no overscan budget for,
+ * which is exactly how a full-bleed layer exposes bare `bg-ink` at an edge. The
+ * clamp makes the mapping total: any real `progress` — negative, past 1, or
+ * mid-passage — resolves to a defined offset instead of an out-of-range one.
+ *
+ * **The bound this guarantees.** Output is confined to the closed interval
+ * `[-amplitude/2, +amplitude/2]`, and `progress = 0.5` yields exactly 0, so an
+ * element sitting mid-screen rests at its true layout position and its travel is
+ * spent symmetrically around it, in view. `amplitude = 0` therefore parks the
+ * plane at 0 for every `progress`, which is what makes reduced motion
+ * (`intensity = 0` → `amplitude = 0`) incapable of displacing anything.
+ *
+ * @param progress Passage through the viewport: 0 entering bottom, 0.5 centered,
+ *   1 exited top. Values outside `[0, 1]` are clamped rather than rejected.
+ * @param amplitude Peak-to-peak travel in px, from {@link resolveAmplitude}.
+ */
+export function cameraY(progress: number, amplitude: number): number {
+  const clamped = Math.min(1, Math.max(0, progress));
+  return (clamped - 0.5) * amplitude;
+}
+
 

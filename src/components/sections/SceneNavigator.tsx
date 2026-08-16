@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useEffect, useRef } from "react";
 import { useReducedMotion } from "framer-motion";
+import { HEX_CLIP, HEX_CLIP_INSET } from "@/lib/shapes";
 import { cn } from "@/lib/utils";
 
 /**
@@ -21,11 +22,8 @@ import { cn } from "@/lib/utils";
  * motion, where the Hero doesn't advance itself.
  */
 
-/** Flat-top hexagon — reads as a dumbbell head, not a "rounded card." */
-const HEX_CLIP = "polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%)";
-
 /**
- * The same hexagon pulled 12% toward the centre, so the trace floats on the
+ * `HEX_CLIP`'s hexagon pulled 12% toward the centre, so the trace floats on the
  * photograph a few pixels clear of the gold rim instead of thickening it.
  */
 const TRACE_PATH = "M31 12 L69 12 L88 50 L69 88 L31 88 L12 50 Z";
@@ -101,7 +99,13 @@ export function SceneNavigator({
 
   return (
     <div
-      className="absolute bottom-6 right-6 z-[60] hidden items-center gap-3 lg:right-8 lg:flex wide:right-10 wide:gap-4"
+      /* `z-30`, and it must stay below 50. At `z-[60]` this bar painted OVER the
+         sticky `Navbar` (`z-50`): the navigator is `absolute` inside a tall hero,
+         so as the hero scrolls up its bottom-right corner passes straight through
+         the pinned header, and a higher z-index put the hex thumbnails and the
+         scroll cue on top of the navigation. 30 keeps it clear of the navbar while
+         staying well above `HeroAtmosphere`'s `z-[5]`. */
+      className="absolute bottom-6 right-6 z-30 hidden items-center gap-3 lg:right-8 lg:flex wide:right-10 wide:gap-4"
       role="group"
       aria-label="Hero scene selector"
     >
@@ -142,7 +146,7 @@ export function SceneNavigator({
             {/* Inner face — the upcoming scene's photography, inset from the rim. */}
             <span
               className="absolute inset-[2.5px] overflow-hidden wide:inset-[3px]"
-              style={{ clipPath: HEX_CLIP }}
+              style={{ clipPath: HEX_CLIP_INSET }}
             >
               <Image
                 src={frame.src}

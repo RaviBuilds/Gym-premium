@@ -133,7 +133,19 @@ export function Programs() {
 
   return (
     <div
-      className="relative"
+      // Anchor target for the navbar's "Programs" item. The nav links to
+      // same-page anchors rather than `/programs`, which does not exist as a
+      // route — see src/config/nav.ts.
+      id="programs"
+      // `flow-root` establishes a block formatting context so the mid-section
+      // TrainingBanner's vertical margin (`my-14`) stays contained. On desktop
+      // the visible row 2 follows the banner and holds that margin in; on
+      // mobile row 2 is `hidden` (display:none), so without a BFC the banner's
+      // bottom margin would escape this gradient container and expose the light
+      // `body` background as a white band above the next section. `flow-root`
+      // (unlike `overflow-hidden`) contains the margin without clipping the
+      // banner's full-bleed negative horizontal margins or any camera overscan.
+      className="relative flow-root"
       style={{
         background: `
           linear-gradient(180deg, 
@@ -277,21 +289,33 @@ export function Programs() {
         }}
       />
 
-      {/* Row 1 material plane — scoped to this row's own wrapper only (not
-          the heading/environment image above, not Train With Purpose
-          below). Positioned first so it sits behind the row's z-10 content
-          within this same relative wrapper. */}
-      <div className="relative pt-10">
+      {/* ── Mobile (<sm): one strip, all nine ────────────────────────────
+          On phones the two-row + mid-banner rhythm cramps into a scroll
+          strip that only ever showed the first three cards before hitting
+          the banner, contradicting the "all 9 programs" hint. So mobile
+          merges every program into ONE swipe strip driven by StripNavigator
+          (index readout + segmented rail + hex steppers), and the single
+          TrainingBanner below drops beneath it. Desktop is untouched — see
+          the two `hidden sm:block` rows further down. Only one tree renders
+          at a time, so the nine cards aren't truly duplicated on screen and
+          the off-screen tree's lazy images never load. */}
+      <div className="relative pt-10 sm:hidden">
         <ProgramMaterialPlane />
         <div className="relative z-10">
           <Container>
             <div className="flex flex-col gap-10">
-              <p className="-mt-4 flex items-center gap-2 font-body text-caption font-semibold uppercase tracking-wide text-text-secondary-dark sm:hidden">
+              <p className="-mt-4 flex items-center gap-2 font-body text-caption font-semibold uppercase tracking-wide text-text-secondary-dark">
                 Swipe to explore all 9 programs
                 <Icon icon={ArrowRight} size="sm" aria-hidden />
               </p>
-              <CardGrid columns={3} reveal="premium" className="relative z-10">
-                {firstRow.map((program, index) => (
+              <CardGrid
+                columns={3}
+                reveal="premium"
+                swipeNav
+                swipeNavLabel="Programs"
+                className="relative z-10"
+              >
+                {programs.map((program, index) => (
                   <ProgramCard
                     key={program.slug}
                     program={program}
@@ -306,12 +330,36 @@ export function Programs() {
         </div>
       </div>
 
+      {/* ── Desktop/tablet (≥sm) row 1 ────────────────────────────────────
+          Material plane scoped to this row's own wrapper only (not the
+          heading/environment image above, not Train With Purpose below). */}
+      <div className="relative hidden pt-10 sm:block">
+        <ProgramMaterialPlane />
+        <div className="relative z-10">
+          <Container>
+            <CardGrid columns={3} reveal="premium" className="relative z-10">
+              {firstRow.map((program, index) => (
+                <ProgramCard
+                  key={program.slug}
+                  program={program}
+                  index={index}
+                  featured={program.slug === "crossfit"}
+                  motion="premium"
+                />
+              ))}
+            </CardGrid>
+          </Container>
+        </div>
+      </div>
+
+      {/* Single banner — lands after the mobile strip, and between the two
+          desktop rows (row 1 above is `hidden sm:block`, so on mobile only
+          the strip precedes this). */}
       <TrainingBanner />
 
-      {/* Row 2 material plane — its own independent instance, scoped to this
-          row's own wrapper only. Train With Purpose's banner sits between
-          this and row 1 above and is untouched by either plane. */}
-      <div className="relative">
+      {/* ── Desktop/tablet (≥sm) row 2 ────────────────────────────────────
+          Its own independent material-plane instance. */}
+      <div className="relative hidden sm:block">
         <ProgramMaterialPlane />
         <div className="relative z-10">
           <Container>
@@ -438,7 +486,12 @@ function TrainingBanner() {
         </AnimationWrapper>
         <AnimationWrapper variant="fade-up" delay={0.3} className="mt-2">
           <MagneticButton>
-            <ButtonLink href="/programs" variant="primary">
+            {/* `/#free-trial`, not `/#programs`: this button sits *inside* the
+                Programs section, so an anchor to the section it lives in would
+                scroll the visitor back to where they already are. The trial form
+                is the real onward action. `/programs` — its previous target — does
+                not exist as a route. See src/config/nav.ts. */}
+            <ButtonLink href="/#free-trial" variant="primary">
               Explore Training
             </ButtonLink>
           </MagneticButton>

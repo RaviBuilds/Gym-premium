@@ -4,7 +4,7 @@ import { fontVariables } from "@/lib/fonts";
 import { defaultMetadata } from "@/lib/metadata";
 import { buildOrganizationSchema } from "@/lib/structured-data";
 import { SkipLink } from "@/components/a11y";
-import { Navbar, Footer, StickyMobileCTA } from "@/components/layout";
+import { Navbar, Footer, StickyMobileCTA, FloatingContactDock } from "@/components/layout";
 import { ScrollProgressBar } from "@/components/motion";
 import { MotionCameraProvider } from "@/lib/motion";
 import "./globals.css";
@@ -64,7 +64,15 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           <Navbar />
           <main id="main-content">{children}</main>
           <Footer />
+          {/*
+            The two conversion docks split the viewport between them and are
+            never both visible: StickyMobileCTA is `lg:hidden`, the floating
+            dock is `hidden lg:flex`. Both carry the same three actions (Call,
+            WhatsApp, Free Trial), so overlapping them would duplicate every
+            CTA in the same corner. See FloatingContactDock's doc comment.
+          */}
           <StickyMobileCTA />
+          <FloatingContactDock />
         </MotionCameraProvider>
       </body>
     </html>

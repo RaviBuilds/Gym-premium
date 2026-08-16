@@ -1,10 +1,11 @@
 "use client";
 
-import { Children, isValidElement } from "react";
+import { Children, isValidElement, useRef } from "react";
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import { AnimationWrapper } from "@/components/motion";
 import { getStaggerDelay } from "@/lib/design-tokens";
+import { StripNavigator, useSnapStrip } from "./StripNavigator";
 
 /**
  * CardGrid — Component-Architecture.md §1 "CardGrid".
@@ -51,6 +52,14 @@ export interface CardGridProps {
    *    scroll-triggered reveal (ProgramCard's `motion="premium"` mode).
    *  - `"none"`: children render with no reveal wrapper. */
   reveal?: "standard" | "premium" | "none";
+  /** Opt into the mobile `StripNavigator` control bar (index readout +
+   *  segmented rail + hex steppers) beneath the swipe strip, plus a dynamic
+   *  edge-fade on the strip itself. Off by default so existing CardGrids are
+   *  unchanged. The control bar is `sm:hidden`; above `sm` the grid shows
+   *  everything, so there is nothing to navigate. */
+  swipeNav?: boolean;
+  /** Accessible label for the `swipeNav` control group (e.g. "Programs"). */
+  swipeNavLabel?: string;
 }
 
 const desktopColsMap = {
@@ -65,21 +74,61 @@ const tabletColsMap = {
   4: "sm:grid-cols-2",
 } as const;
 
-export function CardGrid({ children, columns, className, reveal = "standard" }: CardGridProps) {
+/** Width of the strip's dynamic edge fade, in px. Sits on the 8px scale (x4). */
+const EDGE_FADE = 32;
+
+export function CardGrid({
+  children,
+  columns,
+  className,
+  reveal = "standard",
+  swipeNav = false,
+  swipeNavLabel,
+}: CardGridProps) {
   let index = 0;
 
-  return (
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const count = Children.count(children);
+  // Passing `count = 0` disables the hook entirely for non-swipe grids.
+  const { activeIndex, atStart, atEnd, scrollToIndex } = useSnapStrip(
+    scrollRef,
+    swipeNav ? count : 0
+  );
+
+  // Edge fade communicates "there's more this way" continuously, and retracts
+  // at each end so the first/last card is never clipped at rest. Only built
+  // for `swipeNav`; the strip is `sm:hidden`, so this never affects desktop.
+  const maskImage = !swipeNav
+    ? undefined
+    : atStart && atEnd
+      ? undefined
+      : atStart
+        ? `linear-gradient(to right, #000 calc(100% - ${EDGE_FADE}px), transparent 100%)`
+        : atEnd
+          ? `linear-gradient(to right, transparent 0, #000 ${EDGE_FADE}px)`
+          : `linear-gradient(to right, transparent 0, #000 ${EDGE_FADE}px, #000 calc(100% - ${EDGE_FADE}px), transparent 100%)`;
+
+  const strip = (
     <div
+      ref={scrollRef}
       className={cn(
         // Mobile: horizontal scroll-snap strip, each item ~85% of viewport wide
         // so the swipe affordance is visually obvious (§10 Component-Architecture.md).
-        "flex snap-x snap-mandatory gap-4 overflow-x-auto pb-2 [&>*]:w-[85%] [&>*]:shrink-0 [&>*]:snap-start",
+        // `scrollbar-none` (globals.css) drops the native scrollbar track — on
+        // Windows/desktop viewports that track renders as a classic inset bar
+        // with arrow buttons, which reads as OS chrome rather than design. The
+        // swipe affordance is carried by the peeking next card, the edge fade,
+        // and (when `swipeNav`) the StripNavigator below. `overscroll-x-contain`
+        // stops an over-swipe from chaining to the page / browser back-swipe.
+        // `pb-2` is kept for card shadow breathing room, not for the removed track.
+        "flex snap-x snap-mandatory gap-4 overflow-x-auto overscroll-x-contain scrollbar-none pb-2 [&>*]:w-[85%] [&>*]:shrink-0 [&>*]:snap-start",
         "sm:grid sm:gap-6 sm:overflow-visible sm:pb-0 sm:[&>*]:w-auto sm:[&>*]:shrink",
         tabletColsMap[columns],
         desktopColsMap[columns],
         columns >= 3 && "lg:gap-8",
         className
       )}
+      style={maskImage ? { maskImage, WebkitMaskImage: maskImage } : undefined}
     >
       {Children.map(children, (child) => {
         if (!isValidElement(child)) return child;
@@ -94,6 +143,22 @@ export function CardGrid({ children, columns, className, reveal = "standard" }: 
           </AnimationWrapper>
         );
       })}
+    </div>
+  );
+
+  if (!swipeNav) return strip;
+
+  return (
+    <div>
+      {strip}
+      <StripNavigator
+        count={count}
+        activeIndex={activeIndex}
+        atStart={atStart}
+        atEnd={atEnd}
+        onSelect={scrollToIndex}
+        label={swipeNavLabel}
+      />
     </div>
   );
 }

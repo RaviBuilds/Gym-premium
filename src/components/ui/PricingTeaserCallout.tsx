@@ -28,7 +28,9 @@ export function PricingTeaserCallout({
       <BodyText size="large" className="font-bold text-white">
         {priceText}
       </BodyText>
-      <ButtonLink href="/pricing" variant="primary" size="compact">
+      {/* `/#pricing` — the MembershipCta section, not a `/pricing` route, which
+          does not exist. See src/config/nav.ts. */}
+      <ButtonLink href="/#pricing" variant="primary" size="compact">
         View Membership Plans
       </ButtonLink>
     </div>

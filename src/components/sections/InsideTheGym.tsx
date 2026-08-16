@@ -4,82 +4,57 @@ import { Eyebrow, Heading, BodyText } from "@/components/ui";
 import { AnimationWrapper, CameraGroup, CameraLayer } from "@/components/motion";
 
 /**
- * InsideTheGym — a single cinematic editorial beat between WhyInfiniti
- * (Our Philosophy) and Facilities (Everything You Need).
+ * InsideTheGym — V2 cinematic editorial beat between WhyInfiniti and
+ * Facilities.
  *
- * Deliberately NOT a card/grid section — Programs and TrainerShowcase
- * already own that pattern. This is one full-bleed photograph of the real
- * training floor (squat rack, battle ropes, dumbbell row all visible in a
- * single frame) with one title block, answering "what does it feel like to
- * train here" purely through composition + a single scroll reveal rather
- * than a multi-stage narrative — the supplied image already shows three
- * simultaneous forms of training, so the story doesn't need to be told in
- * sequential beats.
+ * The section is a single full-bleed photograph of the real training floor
+ * with editorial text composition, answering "what does it feel like to
+ * train here" through atmosphere rather than information. The dominant
+ * subject (the dumbbell-row lifter) sits right-of-center; text anchors
+ * to the upper-left where the image has natural low-contrast negative space
+ * (exposed ceiling, pendant lights).
  *
- * Refinement pass: the image now breaks out of the Container to reach both
- * viewport edges — the exact `lg:left-[calc(50%-50vw)] lg:w-screen`
- * full-bleed technique WhyInfiniti already uses, so this isn't a new layout
- * mechanism, just the proven one applied here too. `overflow-hidden` on the
- * PageSection (below) is what keeps that breakout from ever causing
- * horizontal scroll. No rounded corners on the frame anymore — corners
- * touching the viewport edge shouldn't be rounded, and the rounding was
- * part of why the image used to read as a floating card rather than an
- * integrated page surface.
- *
- * Image composition note: the photo's only clean, low-contrast band runs
- * across the top third (exposed ceiling, pendant lights) — every other
- * region has a lifter or a loaded rack in it. That's why the title block is
- * top-anchored with a top-down scrim, unlike WhyInfiniti's left-side gradient
- * (that image had a clean left column instead). Different image, different
- * negative space, different treatment — not a copy-paste of the WhyInfiniti
- * pattern. The dominant, sharpest subject (the dumbbell-row lifter) sits
- * right-of-center in the source frame, which is why the mobile crop below
- * biases right instead of using a blind center crop that would lose him on
- * a narrow viewport.
- *
- * Motion: reuses the existing camera depth vocabulary exactly as WhyInfiniti
- * and TrustStrip do — CameraLayer depth="background" already gives a
- * 1.045→1.0 dolly and scroll-linked drift, which is the "subtle scale +
- * crop shift" the brief asks for. No new scroll engine, no sticky/pinned
- * layout: a pinned composition would need a second independent scroll
- * subscription running alongside the camera's own, which is exactly the
- * "two systems own the same transform" problem the camera architecture
- * exists to avoid. The image's own entrance is a plain `fade` (not
- * `scale-in-settle`) nested INSIDE CameraLayer, wrapping only the <Image> —
- * not wrapping CameraLayer itself — for the same reason WhyInfiniti's own
- * comment documents: transforming the element CameraLayer measures would
- * feed the camera's own measurement while the entrance plays. `fade` over
- * `scale-in-settle` is deliberate here: a 6% scale pop-in on a full-viewport
- * photograph reads as "website element animating in" rather than "walking
- * into a room" — WhyInfiniti's own full-bleed image uses the same plain
- * fade for the same reason. AnimationWrapper handles the one-time entrance
- * for the image and for each line of text, same as every other section;
- * none of that shared file is modified here.
+ * V2 refinements over the prior implementation:
+ *  - Scrims reworked: top-down rectangle replaced with a diagonal editorial
+ *    gradient that feels like natural shadow falling across the left wall,
+ *    plus a localized left-column text protector. The right-side athlete
+ *    and equipment stay visually unobscured.
+ *  - One editorial metadata detail: "01 — TRAINING FLOOR" at the bottom-left
+ *    in tiny caption type with a short yellow rule, giving the composition
+ *    a designed/branded touch without floating cards or badge stacks.
+ *  - Section transitions tightened: top fade shorter/smoother; bottom dissolve
+ *    uses a longer, multi-stop ramp through the Ink tone so the image melts
+ *    into the next section with no visible band.
+ *  - Image height slightly increased on desktop for more cinematic presence.
+ *  - All motion unchanged: CameraLayer `depth="background"` handles the
+ *    subtle parallax; AnimationWrapper handles entrance reveals. No new
+ *    motion primitives introduced.
  */
 export function InsideTheGym() {
   return (
     <PageSection
       tone="dark"
       spacing="compact"
-      className="relative overflow-hidden pt-6 pb-0 lg:pt-8 lg:pb-0"
+      className="relative overflow-hidden pt-4 pb-0 lg:pt-6 lg:pb-0"
     >
-      {/* Short, atmospheric emergence out of WhyInfiniti's dark tone — sized
-          to slightly overlap the top of the image below (rather than sit in
-          the flat padding gap above it) so it reads as the photo dissolving
-          in, not as extra section spacing. The section's own top padding
-          above is now just a small breath (pt-6/lg:pt-8), not a full
-          `standard`/`compact` py — that doubled-up gap was the source of the
-          previous dead space. */}
+      {/* Top transition — subtle emergence from the preceding dark section.
+          Minimal height so there's no visible dead band. */}
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-x-0 top-0 z-[1] h-8 sm:h-10 lg:h-12"
+        className="pointer-events-none absolute inset-x-0 top-0 z-[1] h-6 sm:h-8 lg:h-10"
         style={{
           background: "linear-gradient(180deg, rgb(20,24,29) 0%, transparent 100%)",
         }}
       />
 
-      <div className="relative -mx-4 h-[56vh] overflow-hidden sm:-mx-6 sm:h-[62vh] lg:left-[calc(50%-50vw)] lg:mx-0 lg:h-[78vh] lg:w-screen">
-        {/* Background Plane — the training floor photograph. */}
+      {/* Full-bleed image frame — breaks out of Container to reach viewport
+          edges. Height tuned for cinematic presence on desktop (82vh) while
+          staying practical on mobile (58vh). */}
+      <div className="relative -mx-4 h-[58vh] overflow-hidden sm:-mx-6 sm:h-[64vh] lg:left-[calc(50%-50vw)] lg:mx-0 lg:h-[82vh] lg:w-screen">
+        {/* Background Plane — the training floor photograph with camera-
+            driven subtle parallax (depth="background" → lag 0.12, scale
+            1.045→1.0). The image entrance is a plain fade — no scale pop,
+            which would read as "website animation" on a full-viewport photo. */}
         <CameraLayer depth="background" fill decorative>
           <AnimationWrapper variant="fade" className="relative h-full w-full">
             <Image
@@ -93,70 +68,88 @@ export function InsideTheGym() {
           </AnimationWrapper>
         </CameraLayer>
 
-        {/* Top scrim — vertical fade for the eyebrow/headline row. Only
-            enough to lift the text to AA contrast; the gym's own warm
-            practical lighting stays visible below it. Purely for text
-            readability, not for darkening the photograph. */}
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-x-0 top-0 h-1/2"
-          style={{
-            background:
-              "linear-gradient(180deg, rgba(20,24,29,0.68) 0%, rgba(20,24,29,0.32) 45%, transparent 100%)",
-          }}
-        />
-
-        {/* Left-to-right text-protection gradient — localized to the text
-            column only. The vertical scrim above treats the whole width
-            evenly, which left the supporting copy competing with the
-            brighter window/pendant-light area behind it. This adds darkening
-            ONLY on the left ~35% of the frame and fades to fully transparent
-            by 60% width, well before the right-side athlete and equipment —
-            a soft editorial gradient, not a spotlight or a flat rectangle. */}
+        {/* Editorial gradient — diagonal scrim that feels like natural shadow
+            falling across the left wall of the gym (135deg direction) rather
+            than a rectangular top-down overlay. Only darkens the text region;
+            the right 50%+ stays fully transparent so the athlete and
+            equipment are unobscured. */}
         <div
           aria-hidden="true"
           className="pointer-events-none absolute inset-0"
           style={{
             background:
-              "linear-gradient(90deg, rgba(20,24,29,0.5) 0%, rgba(20,24,29,0.22) 35%, transparent 60%)",
+              "linear-gradient(135deg, rgba(20,24,29,0.72) 0%, rgba(20,24,29,0.45) 28%, rgba(20,24,29,0.15) 48%, transparent 65%)",
           }}
         />
 
-        {/* Content Plane — eyebrow + headline + supporting line as one rigid
-            group, aligned to the site's real Container padding scale so the
-            text column lines up with WhyInfiniti's and Facilities' copy
-            rather than using arbitrary spacing of its own. */}
+        {/* Subtle top veil — just enough to ensure the eyebrow clears AA
+            contrast against the brightest pendant lights in the ceiling zone.
+            Shorter and lighter than V1's full-height rectangle. */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-x-0 top-0 h-[35%]"
+          style={{
+            background:
+              "linear-gradient(180deg, rgba(20,24,29,0.4) 0%, transparent 100%)",
+          }}
+        />
+
+        {/* Content Plane — editorial text block, left-aligned with the site's
+            Container padding scale. CameraGroup depth="content" gives it a
+            slightly different scroll rate than the background, reinforcing
+            the spatial depth without any explicit parallax animation. */}
         <CameraGroup
           depth="content"
-          className="absolute inset-x-0 top-0 flex flex-col gap-3 px-4 pt-8 sm:gap-4 sm:px-6 sm:pt-10 lg:max-w-xl lg:gap-5 lg:px-12 lg:pt-14 wide:px-20"
+          className="absolute inset-x-0 top-0 flex h-full flex-col justify-between px-4 pt-10 pb-8 sm:px-6 sm:pt-12 sm:pb-10 lg:max-w-2xl lg:px-12 lg:pt-16 lg:pb-14 wide:px-20"
         >
-          <AnimationWrapper variant="fade-up">
-            <Eyebrow tone="dark">Inside The Gym</Eyebrow>
-          </AnimationWrapper>
+          {/* Upper text cluster */}
+          <div className="flex flex-col gap-3 sm:gap-4 lg:gap-5">
+            <AnimationWrapper variant="fade-up">
+              <Eyebrow tone="dark">Inside The Gym</Eyebrow>
+            </AnimationWrapper>
 
-          <AnimationWrapper variant="fade-up" delay={0.1}>
-            <Heading level="section" as="h2" className="max-w-[16ch] text-white">
-              This is where the work gets done.
-            </Heading>
-          </AnimationWrapper>
+            <AnimationWrapper variant="fade-up" delay={0.1}>
+              <Heading level="section" as="h2" className="max-w-[16ch] text-white">
+                This is where the work gets done.
+              </Heading>
+            </AnimationWrapper>
 
-          <AnimationWrapper variant="fade-up" delay={0.2}>
-            <BodyText size="large" className="max-w-[36ch] text-text-secondary-dark">
-              Squat racks. Battle ropes. Free weights. No filler.
-            </BodyText>
+            <AnimationWrapper variant="fade-up" delay={0.2}>
+              <BodyText size="standard" className="max-w-[28ch] text-text-secondary-dark">
+                Squat racks. Battle ropes. Free weights. No filler.
+              </BodyText>
+            </AnimationWrapper>
+          </div>
+
+          {/* Editorial detail — one restrained metadata line anchored at the
+              bottom-left. Tiny caption type + short yellow rule, integrated
+              into the composition. This single detail lifts the section from
+              "banner with text" to "designed editorial chapter" without
+              introducing floating cards, badge stacks, or extra decoration. */}
+          <AnimationWrapper variant="fade-up" delay={0.4}>
+            <div className="flex items-center gap-3">
+              <span
+                aria-hidden="true"
+                className="inline-block h-px w-5 bg-brand-yellow"
+              />
+              <span className="font-body text-[11px] font-medium uppercase tracking-[0.14em] text-white/50 sm:text-xs">
+                01 — Training Floor
+              </span>
+            </div>
           </AnimationWrapper>
         </CameraGroup>
       </div>
 
-      {/* Hands off to Facilities' own top blend (dark→light) with no gap.
-          Kept to the minimum height that still reads as a dissolve rather
-          than a second visible dark band — Facilities' own top blend does
-          the rest of the light transition work from its side. */}
+      {/* Bottom dissolve — multi-stop ramp through Ink so the photograph
+          melts into the next section naturally. Longer than V1 (h-16→h-20
+          on desktop) and uses 4 stops rather than 2 for a more gradual,
+          invisible transition. */}
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-x-0 bottom-0 z-[1] h-6 sm:h-8 lg:h-10"
+        className="pointer-events-none absolute inset-x-0 bottom-0 z-[1] h-10 sm:h-14 lg:h-20"
         style={{
-          background: "linear-gradient(0deg, rgb(20,24,29) 0%, transparent 100%)",
+          background:
+            "linear-gradient(180deg, transparent 0%, rgba(20,24,29,0.4) 30%, rgba(20,24,29,0.8) 65%, rgb(20,24,29) 100%)",
         }}
       />
     </PageSection>
