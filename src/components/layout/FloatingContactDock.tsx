@@ -7,6 +7,8 @@ import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 
 import { siteConfig } from "@/config/site";
 import { Icon } from "@/components/ui/Icon";
+import { useElementInView } from "@/lib/hooks";
+import { useIsOverlayOpen } from "@/lib/overlay-lock";
 import { HEX_CLIP } from "@/lib/shapes";
 import { cn } from "@/lib/utils";
 
@@ -43,11 +45,15 @@ import { cn } from "@/lib/utils";
  * 1. **It does not appear until the hero is behind you** ({@link REVEAL_AFTER_PX}).
  *    The hero already presents two large CTAs; a third floating one competing with
  *    them in the first viewport reads as a plugin, not as design.
- * 2. **It hides itself once the trial form is on screen** (see the
- *    `IntersectionObserver` below). The dock exists to get a visitor to
+ * 2. **It hides itself once the trial form is on screen** (`useElementInView`
+ *    against {@link TRIAL_FORM_ID}). The dock exists to get a visitor to
  *    `#free-trial`; once they are looking at the form, it is noise, and it would
  *    otherwise sit directly on top of the footer's own back-to-top button in the
  *    same corner.
+ * 3. **It withdraws while a modal is open** (`useIsOverlayOpen`). The trial
+ *    intercept modal offers these same three actions, so leaving the dock up
+ *    would put Call, WhatsApp and Free Trial on screen twice — the exact
+ *    duplication the desktop/mobile split above exists to prevent.
  *
  * ## Hexagons, not circles
  *
@@ -77,9 +83,18 @@ const REVEAL_AFTER_PX = 640;
  * Matched by `id` rather than by a ref, because the form lives in `Footer`, several
  * levels away in a different subtree, and threading a ref up through `layout.tsx`
  * to a fixed-position sibling would couple two components that currently share
- * nothing but a URL fragment.
+ * nothing but a URL fragment. `useElementInView` owns that observer now, since
+ * the trial intercept modal suppresses itself against the same element for the
+ * same reason and the two must not drift apart on what "visible" means.
  */
 const TRIAL_FORM_ID = "free-trial";
+
+/**
+ * How far the form must be into the viewport to count. `-20%` from the bottom
+ * edge means it has to be genuinely on screen, not peeking into the last few
+ * pixels. Shared verbatim with `TrialInterceptModal`.
+ */
+const TRIAL_FORM_ROOT_MARGIN = "0px 0px -20% 0px";
 
 /**
  * The dock's actions, in DOM order — which is also bottom-to-top visual order,
@@ -117,7 +132,10 @@ const DOCK_ACTIONS: readonly DockAction[] = [
     href: siteConfig.links.whatsapp,
     icon: MessageCircle,
     external: true,
-    faceClass: "bg-whatsapp text-white",
+    // `text-ink`, not `text-white`: white-on-`#25D366` measures ≈1.98:1,
+    // which fails WCAG AA's 4.5:1 floor outright. See the matching fix and
+    // measurement note on Button's `whatsapp` variant.
+    faceClass: "bg-whatsapp text-ink",
     pulse: true,
   },
   {
@@ -165,9 +183,16 @@ export function FloatingContactDock() {
   const panelId = useId();
 
   const [isRevealed, setIsRevealed] = useState(false);
-  const [isFormInView, setIsFormInView] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
+
+  /** See {@link TRIAL_FORM_ID} — behaviour 2 in this file's header. */
+  const isFormInView = useElementInView(TRIAL_FORM_ID, {
+    rootMargin: TRIAL_FORM_ROOT_MARGIN,
+  });
+
+  /** See behaviour 3 — a modal is open, so this dock's actions are duplicated. */
+  const isOverlayOpen = useIsOverlayOpen();
 
   /**
    * Reveal on scroll depth.
@@ -187,36 +212,6 @@ export function FloatingContactDock() {
     window.addEventListener("scroll", evaluate, { passive: true });
 
     return () => window.removeEventListener("scroll", evaluate);
-  }, []);
-
-  /**
-   * Hide once the trial form is on screen. See {@link TRIAL_FORM_ID}.
-   *
-   * The form is rendered by `Footer` on every route, but this guards for its
-   * absence anyway: a future route could omit the footer, and an observer that
-   * silently never fires is better than one that throws on a null target.
-   */
-  useEffect(() => {
-    const form = document.getElementById(TRIAL_FORM_ID);
-
-    if (form === null) {
-      return;
-    }
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const entry = entries[0];
-
-        if (entry !== undefined) {
-          setIsFormInView(entry.isIntersecting);
-        }
-      },
-      { rootMargin: "0px 0px -20% 0px" }
-    );
-
-    observer.observe(form);
-
-    return () => observer.disconnect();
   }, []);
 
   const close = useCallback(() => setIsOpen(false), []);
@@ -245,7 +240,7 @@ export function FloatingContactDock() {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [isOpen, close]);
 
-  const isVisible = isRevealed && !isFormInView;
+  const isVisible = isRevealed && !isFormInView && !isOverlayOpen;
 
   return (
     /**

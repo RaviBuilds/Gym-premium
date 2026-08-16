@@ -72,25 +72,49 @@ export function Eyebrow({
   );
 }
 
-/** BodyText — standard paragraph component (§3, §Component-Architecture.md). */
+/**
+ * BodyText — standard paragraph component (§3, §Component-Architecture.md).
+ *
+ * `id` is supported for the same reason `Heading` supports it: a paragraph is
+ * frequently the target of an `aria-describedby`, and the one place that is
+ * mandatory rather than nice-to-have is a dialog, where the supporting line *is*
+ * the accessible description. Without it, every such call site has to wrap the
+ * paragraph in an otherwise-pointless `div` just to hang an id on.
+ */
 export function BodyText({
   children,
   size = "standard",
   className,
   as: Tag = "p",
+  id,
 }: {
   children: ReactNode;
   size?: "standard" | "large" | "caption";
   className?: string;
   as?: ElementType;
+  id?: string;
 }) {
+  /**
+   * `large` steps three times (16 / 18 / 20px) rather than the two-step
+   * base -> `lg:` pattern the rest of the scale uses. Below 640px it collapses
+   * onto `text-body`, so a section's lead paragraph is the same size as its
+   * body copy: at 18px on a phone the lead wrapped to three or four lines and
+   * read as *larger* than the 32px headline above it (more ink on screen, even
+   * at a smaller size), which is the single biggest reason the mobile page
+   * flattened out. `sm:` restores the 18px step for tablets, where there is
+   * room for it, and desktop is unchanged at 20px.
+   */
   const sizeStyles = {
-    large: "text-body-lg lg:text-body-lg-desktop",
+    large: "text-body sm:text-body-lg lg:text-body-lg-desktop",
     standard: "text-body",
     caption: "text-caption lg:text-caption-lg",
   } as const;
 
-  return <Tag className={cn("font-body", sizeStyles[size], className)}>{children}</Tag>;
+  return (
+    <Tag id={id} className={cn("font-body", sizeStyles[size], className)}>
+      {children}
+    </Tag>
+  );
 }
 
 /**

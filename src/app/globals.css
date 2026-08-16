@@ -67,9 +67,22 @@
   --text-hero-display-lg--letter-spacing: -0.03em;
   --text-hero-display-lg--font-weight: 900;
 
-  /* Section Heading (H2) — 48px desktop / 28px mobile, Black/900, lh 1.1, ls -0.01em */
-  --text-section: 1.75rem;
-  --text-section--line-height: 1.1;
+  /* Section Heading (H2) — 48px desktop / 32px mobile, Black/900, lh 1.1, ls -0.01em
+     Mobile was 28px, which put the section headline only 1.55x above the 18px
+     lead paragraph directly under it. On a 390px phone that is not enough
+     separation to read as a different level — reviewed on-device, the H2 and
+     its own subtitle looked like the same piece of text in two weights, and
+     the whole page flattened into "everything is the same size". Desktop keeps
+     its 48px/20px pairing (2.4x) untouched; this raises the mobile ratio to
+     2.0x by meeting the shrunken lead paragraph (see --text-body-lg) halfway.
+     32px is the ceiling before Archivo Black at ~19 characters per line starts
+     pushing the longest headline on the page ("Everything you need, nothing
+     you're paying extra for") past three lines. Line-height opened 1.1 -> 1.12
+     because at this size every mobile H2 wraps, so the value is now setting
+     multi-line leading rather than single-line height. Every `text-section`
+     call site pairs it with `lg:text-section-lg`, so this is mobile/tablet only. */
+  --text-section: 2rem;
+  --text-section--line-height: 1.12;
   --text-section--letter-spacing: -0.01em;
   --text-section--font-weight: 900;
   --text-section-lg: 3rem;
@@ -95,7 +108,17 @@
   --text-eyebrow-lg--letter-spacing: 0.12em;
   --text-eyebrow-lg--font-weight: 600;
 
-  /* Body — large — 20px desktop / 18px mobile, Regular/400, lh 1.5 */
+  /* Body — large — 20px desktop / 18px tablet / 16px mobile, Regular/400, lh 1.5.
+     Note the tier this token now sits in: `BodyText size="large"` renders
+     `text-body sm:text-body-lg lg:text-body-lg-desktop`, so --text-body-lg is
+     the TABLET step and phones fall back to --text-body (16px). The lead
+     paragraph under a section headline is the one role that has to give ground
+     on a narrow screen — at 18px it wrapped to three or four lines and ended up
+     occupying more of the viewport than the headline above it, which is what
+     collapsed the mobile hierarchy. There is deliberately only one paragraph
+     size below 640px; "lead vs body" is a distinction that needs horizontal
+     room to register, and re-adding a 17px middle step would just be another
+     near-identical rung on an already crowded ladder. */
   --text-body-lg: 1.125rem;
   --text-body-lg--line-height: 1.5;
   --text-body-lg--font-weight: 400;

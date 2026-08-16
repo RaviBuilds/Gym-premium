@@ -43,7 +43,13 @@ const variantStyles: Record<ButtonVariant, string> = {
     "bg-transparent border-2 border-current text-current transition-[color,border-color,background-color] duration-400 ease-out hover:border-brand-yellow hover:text-brand-yellow hover:bg-white/5 hover:duration-300",
   ghost:
     "bg-transparent text-text-secondary p-0 min-h-0 transition-[color,background-size] duration-300 ease-out hover:text-text-primary hover:duration-200 bg-linear-to-r from-ink to-ink bg-[length:0%_1px] bg-left-bottom bg-no-repeat hover:bg-[length:100%_1px] focus-visible:bg-[length:100%_1px]",
-  whatsapp: "bg-whatsapp text-white transition-colors duration-400 ease-out hover:bg-whatsapp/90 hover:duration-300",
+  // Ink text, not white: measured contrast of white-on-`#25D366` is ≈1.98:1,
+  // which fails WCAG AA's 4.5:1 floor for normal text outright (it does not
+  // even clear the 3:1 floor for large/bold text). Ink-on-`#25D366` measures
+  // ≈9:1. The icon (via `Icon`'s `currentColor` inheritance) flips with it, so
+  // every WhatsApp button on the site — Faq, FinalCta, CommitCta, and the trial
+  // intercept modal — gets the corrected pairing from this one change.
+  whatsapp: "bg-whatsapp text-ink transition-colors duration-400 ease-out hover:bg-whatsapp/90 hover:duration-300",
 };
 
 interface SharedProps {

@@ -5,6 +5,7 @@ import { Phone, MessageCircle, Dumbbell } from "lucide-react";
 import { motion, useReducedMotion } from "framer-motion";
 import { siteConfig } from "@/config/site";
 import { Icon } from "@/components/ui/Icon";
+import { useIsOverlayOpen } from "@/lib/overlay-lock";
 
 /**
  * StickyMobileCTA — Homepage-Architecture.md "Sticky Mobile CTA Bar",
@@ -28,11 +29,30 @@ export function StickyMobileCTA() {
   const prefersReducedMotion = useReducedMotion();
   const phoneHref = `tel:${siteConfig.contact.phones[0]?.replace(/\s+/g, "")}`;
 
+  /**
+   * Slides back out while a modal is open. The trial intercept renders as a
+   * bottom sheet on exactly the viewports this bar occupies, so leaving it up
+   * would stack two "Free Trial" buttons a few pixels apart — and the bar would
+   * sit above the sheet's own safe-area padding. Retreating is not just
+   * de-duplication; it is what gives the sheet the bottom edge to land on.
+   *
+   * Animated rather than unmounted so it returns on dismissal without replaying
+   * its entrance from scratch.
+   */
+  const isOverlayOpen = useIsOverlayOpen();
+
   return (
     <motion.div
       initial={prefersReducedMotion ? { y: 0 } : { y: "100%" }}
-      animate={{ y: 0 }}
-      transition={{ duration: prefersReducedMotion ? 0 : 0.4, delay: prefersReducedMotion ? 0 : 0.25, ease: [0.16, 1, 0.3, 1] }}
+      animate={{ y: isOverlayOpen ? "100%" : 0 }}
+      transition={{ duration: prefersReducedMotion ? 0 : 0.4, delay: prefersReducedMotion || isOverlayOpen ? 0 : 0.25, ease: [0.16, 1, 0.3, 1] }}
+      /* `inert`, not `aria-hidden`. The bar is translated off-screen rather than
+         unmounted, so its three links are still in the tab order — and
+         `aria-hidden` over focusable content is a genuine violation, not just an
+         audit warning. `inert` removes both the focusability and the
+         accessibility-tree entry in one attribute. The dialog's focus trap covers
+         browsers that do not support it. */
+      inert={isOverlayOpen}
       className="fixed inset-x-0 bottom-0 z-40 border-t border-border-dark bg-ink lg:hidden"
       style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
     >

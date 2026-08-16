@@ -83,10 +83,23 @@ export function Hero() {
               Hyderabad&apos;s no-excuses gym
             </p>
 
+            {/* `w-full max-w-none` below 640px is a wrap fix, not a style choice.
+                The parent CameraGroup is `items-start`, so this h1 gets
+                `align-self: flex-start` and is sized shrink-to-fit rather than
+                stretched. Its two children are `flex flex-wrap` KineticHeadline
+                containers, whose intrinsic contribution resolves well below the
+                ~380px actually available on a phone — so the h1 was laying out
+                around 235px wide and breaking "Stop being a dumbbell, burn fat,
+                not muscle." into six lines, one word per line for "a" and "not",
+                tall enough to push "muscle." near the fold. Forcing the full
+                container width lets the same copy wrap as four natural lines with
+                no font-size change. Restored to shrink-to-fit at `sm:`, where the
+                existing character caps do the intended job and desktop is
+                untouched. */}
             <Heading
               level="hero"
               as="h1"
-              className="max-w-[20ch] text-white sm:max-w-[17ch] lg:max-w-[16ch]"
+              className="w-full max-w-none text-white sm:w-auto sm:max-w-[17ch] lg:max-w-[16ch]"
             >
               <span className="block text-hero leading-[1.08] lg:text-hero-lg lg:leading-[1.05]">
                 <KineticHeadline text="Stop being a dumbbell," />

@@ -5,6 +5,7 @@ import { defaultMetadata } from "@/lib/metadata";
 import { buildOrganizationSchema } from "@/lib/structured-data";
 import { SkipLink } from "@/components/a11y";
 import { Navbar, Footer, StickyMobileCTA, FloatingContactDock } from "@/components/layout";
+import { TrialInterceptModal } from "@/components/conversion";
 import { ScrollProgressBar } from "@/components/motion";
 import { MotionCameraProvider } from "@/lib/motion";
 import "./globals.css";
@@ -73,6 +74,20 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           */}
           <StickyMobileCTA />
           <FloatingContactDock />
+          {/*
+            The trial intercept — a scroll-triggered lead-capture modal that
+            opens once the visitor has read the trainer roster. Mounted here
+            rather than inside `page.tsx` because, like the two docks above, it
+            is viewport-fixed and independent of the page's scroll composition.
+
+            It arms itself off `TrainerShowcase`'s `id="trainers"`, so it costs
+            nothing on any route that does not render that section — no route
+            guard needed. While it is open it takes the overlay lock, which
+            freezes page scroll and withdraws both docks so their Call /
+            WhatsApp / Free Trial actions are not on screen twice. See
+            `src/lib/overlay-lock.ts` and `src/config/conversion.ts`.
+          */}
+          <TrialInterceptModal />
         </MotionCameraProvider>
       </body>
     </html>

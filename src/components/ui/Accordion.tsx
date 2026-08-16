@@ -184,10 +184,18 @@ export function Accordion({
                     {number}
                   </span>
 
-                  {/* Question text */}
+                  {/* Question text — `text-subsection` at every width, which is
+                      the same 20px this rendered at 640px and above before, so
+                      tablet and desktop are unchanged. What it fixes is mobile:
+                      the question used to be `text-body-lg` (18px) against a
+                      16px answer, and once `BodyText size="large"` collapsed to
+                      16px on phones this was the only remaining `text-body-lg`
+                      in a heading role — a row of questions sitting barely above
+                      body size. Also retires the lone `sm:text-subsection` step,
+                      which was the only `sm:` font-size in the codebase. */}
                   <span
                     className={cn(
-                      "flex-1 font-body text-body-lg font-semibold transition-colors duration-300 sm:text-subsection",
+                      "flex-1 font-body text-subsection font-semibold transition-colors duration-300",
                       isOpen
                         ? "text-ink"
                         : "text-ink/75 group-hover:text-ink"

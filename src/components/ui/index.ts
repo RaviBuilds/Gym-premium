@@ -10,6 +10,9 @@ export type { BadgeProps, BadgeVariant } from "./Badge";
 export { Icon } from "./Icon";
 export type { IconProps, IconSize } from "./Icon";
 
+export { Dialog } from "./Dialog";
+export type { DialogProps, DialogCloseReason } from "./Dialog";
+
 export { Heading, Eyebrow, BodyText, SectionHeader } from "./Heading";
 export type { HeadingLevel } from "./Heading";
 
